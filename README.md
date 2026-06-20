@@ -56,9 +56,45 @@ src/
     └── FieldLabel.tsx            # small all-caps field label used in cards
 ```
 
+## Cloud sync (Supabase)
+
+Share the same trip with your group — edits auto-save to the cloud and anyone with the link can view and update the plan.
+
+### 1. Create a Supabase project
+
+1. Go to [supabase.com](https://supabase.com) and create a free project.
+2. In **SQL Editor**, paste and run the contents of [`supabase/schema.sql`](supabase/schema.sql).
+3. In **Project Settings → API**, copy:
+   - **Project URL**
+   - **anon public** key
+
+### 2. Configure the app
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+```
+
+Restart the dev server after changing `.env`.
+
+### 3. Share a trip
+
+1. Click **Share trip** in the cloud bar — a unique share code is created.
+2. Click **Copy link** and send it to your group (URL includes `?trip=CODE`).
+3. Changes sync automatically (~1.5 s after you stop editing).
+
+Without Supabase configured, the app still works using **localStorage** plus JSON export/import.
+
 ## Notes
 
 - Map tiles use **OpenStreetMap** (no API key required).
 - Styling targets the soft / modern aesthetic of the reference image:
   light grey canvas, white rounded cards, subtle borders, Inter typography.
 - Day-block list scrolls horizontally so longer trips don't break the layout.
+- Trip data is stored in Supabase only when you create or join a shared trip — it is not committed to GitHub.

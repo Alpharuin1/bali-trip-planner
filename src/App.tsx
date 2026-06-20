@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ThemeProvider,
   CssBaseline,
@@ -27,6 +27,7 @@ import {
 
 import { buildTheme, tokens } from "./theme";
 import { TopBar } from "./components/TopBar";
+import { CloudTripBar } from "./components/CloudTripBar";
 import { DayBlock } from "./components/DayBlock";
 import { TripMap } from "./components/TripMap";
 import { MapLegend } from "./components/MapLegend";
@@ -49,6 +50,7 @@ import { blankPlan, ensureIds, planLength, reconcileDays } from "./utils/plan";
 import { usePersistedState } from "./utils/storage";
 import { colorForTemplate } from "./utils/palette";
 import { useRouteLegs } from "./hooks/useRouteLegs";
+import { useCloudTrip } from "./hooks/useCloudTrip";
 
 const DEFAULT_TEMPLATE = "Plan 1";
 const RADIUS_SECTION = "16px";
@@ -122,6 +124,26 @@ export default function App() {
       return sum + (typeof v === "number" && Number.isFinite(v) ? v : 0);
     }, 0);
   }, [active]);
+
+  const cloudSnapshot = useMemo(
+    () => ({ plans, planOrder, activeTemplate }),
+    [plans, planOrder, activeTemplate]
+  );
+
+  const applyCloudSnapshot = useCallback(
+    (snapshot: typeof cloudSnapshot) => {
+      setPlansRaw(snapshot.plans);
+      setPlanOrder(snapshot.planOrder);
+      setActiveTemplate(snapshot.activeTemplate);
+    },
+    [setPlansRaw, setPlanOrder, setActiveTemplate]
+  );
+
+  const cloud = useCloudTrip({
+    snapshot: cloudSnapshot,
+    applySnapshot: applyCloudSnapshot,
+    tripTitle: "Bali Trip",
+  });
 
   // -------- Plan-level mutations --------
   const setPlans = setPlansRaw;
@@ -338,6 +360,18 @@ export default function App() {
           bgcolor: "background.default",
         }}
       >
+        <CloudTripBar
+          configured={cloud.configured}
+          shareCode={cloud.shareCode}
+          syncStatus={cloud.syncStatus}
+          error={cloud.error}
+          themeMode={themeMode}
+          onCreateSharedTrip={cloud.createSharedTrip}
+          onJoinTrip={cloud.joinTrip}
+          onCopyShareLink={cloud.copyShareLink}
+          onStopSharing={cloud.stopSharing}
+        />
+
         <TopBar
           country="Bali"
           startDate={active.startDate}
