@@ -367,7 +367,6 @@ export default function App() {
           error={cloud.error}
           themeMode={themeMode}
           onCreateSharedTrip={cloud.createSharedTrip}
-          onJoinTrip={cloud.joinTrip}
           onCopyShareLink={cloud.copyShareLink}
           onStopSharing={cloud.stopSharing}
         />

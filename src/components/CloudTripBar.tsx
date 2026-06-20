@@ -1,24 +1,23 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
-  Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+  IconButton,
+  InputAdornment,
   Paper,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import CloudSyncIcon from "@mui/icons-material/CloudSync";
-import LinkIcon from "@mui/icons-material/Link";
-import LoginIcon from "@mui/icons-material/Login";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import IosShareIcon from "@mui/icons-material/IosShare";
 import type { CloudSyncStatus } from "../hooks/useCloudTrip";
+import { shareLinkFor } from "../services/tripCloud";
 import type { ThemeMode } from "../types";
 import { tokens } from "../theme";
 
@@ -29,29 +28,27 @@ interface CloudTripBarProps {
   error: string | null;
   themeMode: ThemeMode;
   onCreateSharedTrip: () => Promise<string | null>;
-  onJoinTrip: (code: string) => Promise<boolean>;
   onCopyShareLink: () => Promise<boolean>;
   onStopSharing: () => void;
 }
 
 const statusLabel: Record<CloudSyncStatus, string> = {
-  local: "Local only",
-  loading: "Loading…",
+  local: "Not shared yet",
+  loading: "Loading trip…",
   saving: "Saving…",
-  saved: "Saved to cloud",
+  saved: "Synced",
   error: "Sync error",
 };
 
-const statusColor: Record<
-  CloudSyncStatus,
-  "default" | "info" | "success" | "warning" | "error"
-> = {
-  local: "default",
-  loading: "info",
-  saving: "warning",
-  saved: "success",
-  error: "error",
-};
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    window.prompt("Copy this link and send it to your group:", text);
+    return true;
+  }
+}
 
 export function CloudTripBar({
   configured,
@@ -60,42 +57,59 @@ export function CloudTripBar({
   error,
   themeMode,
   onCreateSharedTrip,
-  onJoinTrip,
   onCopyShareLink,
   onStopSharing,
 }: CloudTripBarProps) {
   const t = tokens(themeMode);
-  const [joinOpen, setJoinOpen] = useState(false);
-  const [joinCode, setJoinCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
-  const handleCopy = async () => {
-    const ok = await onCopyShareLink();
-    if (ok) {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+  const shareLink = useMemo(
+    () => (shareCode ? shareLinkFor(shareCode) : null),
+    [shareCode]
+  );
+
+  const flashCopied = () => {
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleShareTrip = async () => {
+    if (shareLink) {
+      const ok = await onCopyShareLink();
+      if (ok) flashCopied();
+      return;
+    }
+
+    setSharing(true);
+    try {
+      const code = await onCreateSharedTrip();
+      if (code) {
+        await copyText(shareLinkFor(code));
+        flashCopied();
+      }
+    } finally {
+      setSharing(false);
     }
   };
 
-  const handleJoin = async () => {
-    const ok = await onJoinTrip(joinCode);
-    if (ok) {
-      setJoinOpen(false);
-      setJoinCode("");
-    }
+  const handleCopyLink = async () => {
+    if (!shareLink) return;
+    await copyText(shareLink);
+    flashCopied();
   };
 
   return (
-    <>
-      <Paper
-        elevation={0}
-        sx={{
-          px: 2,
-          py: 1,
-          borderRadius: "12px",
-          boxShadow: t.cardShadow,
-        }}
-      >
+    <Paper
+      elevation={0}
+      sx={{
+        px: 2,
+        py: 1.25,
+        borderRadius: "12px",
+        boxShadow: t.cardShadow,
+      }}
+    >
+      <Stack spacing={1}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1}
@@ -108,112 +122,97 @@ export function CloudTripBar({
               <CloudOffIcon sx={{ fontSize: 18, color: "text.secondary" }} />
             )}
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Cloud sync
+              Share with group
             </Typography>
-            {!configured ? (
+            {configured && shareCode && syncStatus !== "local" && (
+              <Chip
+                size="small"
+                icon={
+                  syncStatus === "saved" ? <CloudDoneIcon /> : <CloudSyncIcon />
+                }
+                label={statusLabel[syncStatus]}
+                color={
+                  syncStatus === "error"
+                    ? "error"
+                    : syncStatus === "saved"
+                      ? "success"
+                      : "default"
+                }
+                variant={syncStatus === "saved" ? "filled" : "outlined"}
+              />
+            )}
+            {!configured && (
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Add Supabase keys to <code>.env</code> — see README
+                Add Supabase keys to <code>.env</code>
               </Typography>
-            ) : shareCode ? (
-              <>
-                <Chip
-                  size="small"
-                  label={`Code: ${shareCode}`}
-                  variant="outlined"
-                />
-                <Chip
-                  size="small"
-                  icon={
-                    syncStatus === "saved" ? (
-                      <CloudDoneIcon />
-                    ) : (
-                      <CloudSyncIcon />
-                    )
-                  }
-                  label={statusLabel[syncStatus]}
-                  color={statusColor[syncStatus]}
-                  variant={syncStatus === "local" ? "outlined" : "filled"}
-                />
-              </>
-            ) : (
-              <Chip size="small" label={statusLabel[syncStatus]} variant="outlined" />
             )}
           </Stack>
 
-          {configured && (
-            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-              {shareCode ? (
-                <>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<LinkIcon />}
-                    onClick={handleCopy}
-                  >
-                    {copied ? "Link copied" : "Copy link"}
-                  </Button>
-                  <Button size="small" variant="outlined" onClick={onStopSharing}>
-                    Stop syncing
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => void onCreateSharedTrip()}
-                  >
-                    Share trip
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<LoginIcon />}
-                    onClick={() => setJoinOpen(true)}
-                  >
-                    Join trip
-                  </Button>
-                </>
-              )}
-            </Stack>
+          {configured && !shareLink && (
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<IosShareIcon />}
+              disabled={sharing}
+              onClick={() => void handleShareTrip()}
+              sx={{ flexShrink: 0, alignSelf: { xs: "stretch", sm: "center" } }}
+            >
+              {sharing ? "Creating link…" : "Share trip"}
+            </Button>
           )}
         </Stack>
 
+        {configured && shareLink && (
+          <Stack spacing={0.75}>
+            <TextField
+              size="small"
+              fullWidth
+              value={shareLink}
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  sx: { fontSize: 13 },
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Copy link">
+                        <IconButton size="small" onClick={() => void handleCopyLink()}>
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              onFocus={(e) => e.target.select()}
+            />
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", justifyContent: "space-between" }}
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {copied
+                  ? "Link copied — paste it in WhatsApp, iMessage, etc."
+                  : "Send this link to your friends. Opening it loads the same trip."}
+              </Typography>
+              <Button
+                size="small"
+                variant="text"
+                sx={{ flexShrink: 0, fontSize: 12 }}
+                onClick={onStopSharing}
+              >
+                Stop sharing
+              </Button>
+            </Stack>
+          </Stack>
+        )}
+
         {error && (
-          <Alert severity="error" sx={{ mt: 1, py: 0 }}>
+          <Alert severity="error" sx={{ py: 0 }}>
             {error}
           </Alert>
         )}
-      </Paper>
-
-      <Dialog open={joinOpen} onClose={() => setJoinOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Join a shared trip</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 0.5 }}>
-            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              Paste the share code from a link, or open a URL with{" "}
-              <code>?trip=CODE</code> directly.
-            </Typography>
-            <TextField
-              autoFocus
-              fullWidth
-              label="Share code"
-              placeholder="e.g. A1B2C3D4"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void handleJoin();
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setJoinOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => void handleJoin()}>
-            Join
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+      </Stack>
+    </Paper>
   );
 }
