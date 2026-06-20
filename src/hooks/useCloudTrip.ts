@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
+  applyPasscodeFlagsToProfiles,
+  fetchProtectedProfileIds,
+} from "../services/profilePasscode";
+import {
   createCloudTrip,
   fetchCloudTrip,
   setTripInUrl,
@@ -18,6 +22,25 @@ export type CloudSyncStatus =
   | "error";
 
 const SAVE_DEBOUNCE_MS = 1500;
+
+async function hydrateSnapshotPasscodes(
+  shareCode: string,
+  snapshot: TripSnapshot
+): Promise<TripSnapshot> {
+  if (!snapshot.profiles) return snapshot;
+
+  try {
+    const protectedIds = await fetchProtectedProfileIds(shareCode);
+    if (protectedIds.size === 0) return snapshot;
+
+    return {
+      ...snapshot,
+      profiles: applyPasscodeFlagsToProfiles(snapshot.profiles, protectedIds),
+    };
+  } catch {
+    return snapshot;
+  }
+}
 
 interface UseCloudTripOptions {
   snapshot: TripSnapshot;
@@ -56,10 +79,10 @@ export function useCloudTrip({
     setError(null);
 
     fetchCloudTrip(codeFromUrl)
-      .then((row) => {
+      .then(async (row) => {
         if (cancelled) return;
         skipNextSave.current = true;
-        applySnapshot(row.payload);
+        applySnapshot(await hydrateSnapshotPasscodes(row.share_code, row.payload));
         readyToSave.current = true;
         setSyncStatus("saved");
       })
@@ -149,7 +172,7 @@ export function useCloudTrip({
       try {
         const row = await fetchCloudTrip(normalized);
         skipNextSave.current = true;
-        applySnapshot(row.payload);
+        applySnapshot(await hydrateSnapshotPasscodes(row.share_code, row.payload));
         readyToSave.current = true;
         setShareCode(row.share_code);
         setTripInUrl(row.share_code);

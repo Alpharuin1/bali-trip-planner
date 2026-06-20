@@ -1,7 +1,14 @@
 import { Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-export function FieldLabel({ children }: { children: ReactNode }) {
+export function FieldLabel({
+  children,
+  sx,
+}: {
+  children: ReactNode;
+  sx?: SxProps<Theme>;
+}) {
   return (
     <Typography
       sx={{
@@ -10,6 +17,7 @@ export function FieldLabel({ children }: { children: ReactNode }) {
         color: "text.secondary",
         mb: 0.5,
         letterSpacing: "0.02em",
+        ...sx,
       }}
     >
       {children}

@@ -26,6 +26,9 @@ export interface Day {
   place: string;
   endPlace: string;
   accommodationPrice?: number;
+  accommodationNights?: number;
+  accommodationName?: string;
+  accommodationLink?: string;
   activityBlocks: ActivityBlock[];
 }
 
@@ -36,6 +39,39 @@ export interface Plan {
 }
 
 export type ViewMode = "plan" | "compare";
+
+/** Top-level app section: shared squad itinerary vs personal packing plan. */
+export type AppSection = "squad" | "myplan";
+
+/** Select value for the unified view dropdown — squad or a personal profile id. */
+export const SQUAD_VIEW_ID = "squad";
+
+export interface ClothingItem {
+  text: string;
+}
+
+export interface ClothingBlock {
+  id: string;
+  name: string;
+  items: ClothingItem[];
+  notes?: string;
+  /** `${activityBlockId}:${activityIndex}` — auto-synced from squad itinerary */
+  squadActivityRef?: string;
+}
+
+export interface PersonalDay {
+  id: string;
+  clothingBlocks: ClothingBlock[];
+  notes?: string;
+}
+
+export interface PersonalProfile {
+  id: string;
+  name: string;
+  days: PersonalDay[];
+  /** Synced metadata — passcode hash lives in Supabase, not in the trip payload. */
+  hasPasscode?: boolean;
+}
 
 /** Compare-mode sub-layout. */
 export type CompareLayout = "stacked" | "side-by-side";

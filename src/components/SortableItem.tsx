@@ -40,14 +40,22 @@ export function SortableItem({ id, fill = false, children }: SortableItemProps) 
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
-    // Don't be a flex container: keeps the wrapper exactly as wide as its
-    // child (e.g. a 240px day card) instead of letting flex-shrink squish it.
     flex: "0 0 auto",
     ...(fill ? { alignSelf: "stretch", height: "100%" } : null),
   };
 
   return (
-    <Box ref={setNodeRef} style={style}>
+    <Box
+      ref={setNodeRef}
+      style={style}
+      sx={{
+        position: "relative",
+        overflow: "visible",
+        // Full width for vertical block lists only — not day cards in the horizontal strip.
+        ...(fill ? null : { width: "100%" }),
+        zIndex: isDragging ? 20 : 0,
+      }}
+    >
       {children({ listeners, attributes, isDragging })}
     </Box>
   );

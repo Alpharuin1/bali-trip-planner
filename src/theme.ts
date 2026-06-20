@@ -84,4 +84,7 @@ export const tokens = (mode: ThemeMode) => ({
       : "0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.35)",
   innerSurface: mode === "light" ? "#f9f9fb" : "#1f242c",
   innerBorder: mode === "light" ? "#ececec" : "#2a2f38",
+  dayCardBorder: mode === "light" ? "#c8ccd4" : "#404650",
+  /** Grey tray behind horizontally-scrolling day cards in plan view. */
+  itineraryTray: mode === "light" ? "#f2f3f6" : "#151920",
 });

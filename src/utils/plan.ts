@@ -1,23 +1,77 @@
 import type { Activity, ActivityBlock, Day, Plan } from "../types";
 import { addDays, daysBetween, isoDate, today } from "./date";
+import { linkLabel, normalizeUrl } from "./links";
 
 const rand = () => Math.random().toString(36).slice(2, 10);
 export const newId = (prefix: string) => `${prefix}_${Date.now().toString(36)}_${rand()}`;
 
 export const blankActivity = (): Activity => ({ text: "" });
 
-export const blankBlock = (n = 1): ActivityBlock => ({
+export const blankBlock = (_n = 1): ActivityBlock => ({
   id: newId("blk"),
-  name: `Activity Block ${n}`,
-  activities: [blankActivity()],
+  name: "",
+  activities: [],
 });
+
+/** One activity name + optional link per block; migrate legacy flattened link lists. */
+export function normalizeDayActivityBlocks(blocks: ActivityBlock[]): ActivityBlock[] {
+  const source = (blocks ?? []).map((b) => ({
+    ...b,
+    id: b.id ?? newId("blk"),
+    name: b.name ?? "",
+    activities: (b.activities ?? []).map((a) =>
+      typeof a === "string" ? { text: a } : { ...a, text: a.text ?? "" }
+    ),
+  }));
+
+  if (source.length === 0) return [];
+
+  const isLegacyLinkBucket =
+    source.length === 1 &&
+    source[0].name.trim().toLowerCase() === "links" &&
+    source[0].activities.filter((a) => a.text.trim()).length > 1;
+
+  if (isLegacyLinkBucket) {
+    return source[0].activities
+      .map((a) => a.text.trim())
+      .filter(Boolean)
+      .map((url) => ({
+        id: newId("blk"),
+        name: linkLabel(url),
+        activities: [{ text: url }],
+      }));
+  }
+
+  return source.map((block) => {
+    const acts = block.activities.filter((a) => a.text.trim());
+    const urls = acts
+      .map((a) => ({ raw: a.text.trim(), url: normalizeUrl(a.text) }))
+      .filter((a): a is { raw: string; url: string } => Boolean(a.url));
+    const nonUrls = acts.filter((a) => !normalizeUrl(a.text));
+
+    let name = block.name.trim();
+    if (name.toLowerCase() === "links") name = "";
+    if (!name && nonUrls.length) name = nonUrls[0].text;
+    if (!name && urls.length === 1) name = linkLabel(urls[0].url);
+
+    const link = urls[0]?.url ?? "";
+    return {
+      ...block,
+      name,
+      activities: link ? [{ text: link }] : [],
+    };
+  });
+}
 
 export const blankDay = (): Day => ({
   id: newId("day"),
   place: "",
   endPlace: "",
   accommodationPrice: undefined,
-  activityBlocks: [blankBlock(1)],
+  accommodationNights: undefined,
+  accommodationName: "",
+  accommodationLink: "",
+  activityBlocks: [],
 });
 
 export const blankPlan = (lengthDays = 5): Plan => {
@@ -57,13 +111,23 @@ export const ensureIds = (plan: Plan): Plan => ({
       typeof (d as any).accommodationPrice === "number"
         ? (d as any).accommodationPrice
         : undefined,
-    activityBlocks: (d.activityBlocks ?? []).map((b) => ({
-      ...b,
-      id: b.id ?? newId("blk"),
-      activities: (b.activities ?? []).map((a) =>
-        // Old shape was a bare string; coerce that into Activity for safety.
-        typeof a === "string" ? { text: a } : a
-      ),
-    })),
+    accommodationNights:
+      typeof (d as any).accommodationNights === "number"
+        ? (d as any).accommodationNights
+        : undefined,
+    accommodationName: (d as any).accommodationName ?? "",
+    accommodationLink: (d as any).accommodationLink ?? "",
+    activityBlocks: normalizeDayActivityBlocks(d.activityBlocks ?? []),
   })),
 });
+
+/** Squad day card subtitle from Place → End the day at fields. */
+export function formatDayRouteLabel(place: string, endPlace: string): string | null {
+  const start = place.trim();
+  const end = endPlace.trim();
+  if (!start && !end) return null;
+  if (start && end && start.toLowerCase() !== end.toLowerCase()) {
+    return `${start} -> ${end}`;
+  }
+  return start || end;
+}

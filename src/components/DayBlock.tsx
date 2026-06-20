@@ -5,9 +5,9 @@ import {
   Autocomplete,
   TextField,
   Stack,
-  Button,
   IconButton,
   Tooltip,
+  Button,
 } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -27,12 +27,17 @@ import {
 
 import { FieldLabel } from "./FieldLabel";
 import { ActivityBlockCard } from "./ActivityBlockCard";
-import { SortableItem, type DragHandleProps } from "./SortableItem";
+import { AccommodationCard } from "./AccommodationCard";
+import { SortableItem } from "./SortableItem";
 import { BALI_LOCATIONS, findLoc } from "../locations";
 import type { ActivityBlock, Day, Location, ThemeMode } from "../types";
-import { fmtDate, fmtDay } from "../utils/date";
-import { blankBlock } from "../utils/plan";
+import { fmtDate } from "../utils/date";
+import { blankBlock, formatDayRouteLabel } from "../utils/plan";
+import { dayHasAccommodationContent } from "../utils/accommodation";
+import { BLOCK_CONTROL_BLEED } from "./BlockCardShell";
+import { SQUAD_DAY_CARD_WIDTH } from "../layout";
 import { tokens } from "../theme";
+import type { DragHandleProps } from "./SortableItem";
 
 interface DayBlockProps {
   index: number;
@@ -48,6 +53,10 @@ interface DayBlockProps {
   dragHandle?: DragHandleProps;
   /** Card → marker hover-link callback (no visual change on the card itself). */
   onHover?: (hovered: boolean) => void;
+}
+
+function blockHasContent(block: ActivityBlock): boolean {
+  return Boolean(block.name.trim() || block.activities.some((a) => a.text.trim()));
 }
 
 export function DayBlock({
@@ -71,37 +80,25 @@ export function DayBlock({
   const updateEnd = (val: Location | null) =>
     onChange({ ...day, endPlace: val ? val.name : "" });
 
-  const updateBlock = (id: string, next: ActivityBlock) =>
-    onChange({
-      ...day,
-      activityBlocks: day.activityBlocks.map((b) => (b.id === id ? next : b)),
-    });
+  const setBlocks = (blocks: ActivityBlock[]) =>
+    onChange({ ...day, activityBlocks: blocks });
 
-  const addBlock = () =>
-    onChange({
-      ...day,
-      activityBlocks: [
-        ...day.activityBlocks,
-        blankBlock(day.activityBlocks.length + 1),
-      ],
-    });
+  const updateBlock = (id: string, next: ActivityBlock) =>
+    setBlocks(day.activityBlocks.map((b) => (b.id === id ? next : b)));
 
   const removeBlock = (id: string) =>
-    onChange({
-      ...day,
-      activityBlocks: day.activityBlocks.filter((b) => b.id !== id),
-    });
+    setBlocks(day.activityBlocks.filter((b) => b.id !== id));
 
-  const onBlocksDragEnd = (e: DragEndEvent) => {
+  const addBlock = () =>
+    setBlocks([...day.activityBlocks, blankBlock(day.activityBlocks.length + 1)]);
+
+  const onBlockDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     const oldIdx = day.activityBlocks.findIndex((b) => b.id === active.id);
     const newIdx = day.activityBlocks.findIndex((b) => b.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
-    onChange({
-      ...day,
-      activityBlocks: arrayMove(day.activityBlocks, oldIdx, newIdx),
-    });
+    setBlocks(arrayMove(day.activityBlocks, oldIdx, newIdx));
   };
 
   const clearDay = () => {
@@ -110,19 +107,22 @@ export function DayBlock({
       place: "",
       endPlace: "",
       accommodationPrice: undefined,
-      activityBlocks: [blankBlock(1)],
+      accommodationNights: undefined,
+      accommodationName: "",
+      accommodationLink: "",
+      activityBlocks: [],
     });
   };
 
   const isEmpty =
     !day.place &&
     !day.endPlace &&
-    (day.accommodationPrice == null || Number.isNaN(day.accommodationPrice)) &&
-    day.activityBlocks.length === 1 &&
-    day.activityBlocks[0].activities.every((a) => !a.text);
+    !dayHasAccommodationContent(day) &&
+    day.activityBlocks.every((b) => !blockHasContent(b));
 
   const placeValue = findLoc(day.place);
   const endValue = findLoc(day.endPlace);
+  const routeLabel = formatDayRouteLabel(day.place, day.endPlace);
 
   return (
     <Paper
@@ -130,26 +130,25 @@ export function DayBlock({
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
       sx={{
-        // Fixed-width card. flexShrink: 0 protects against an enclosing
-        // flex parent trying to shrink it; width works whether the parent
-        // is a flex container or a normal block.
-        width: 240,
+        width: SQUAD_DAY_CARD_WIDTH,
         flexShrink: 0,
-        // Fill the parent's vertical height in the full (plan-mode) view.
         ...(compact ? null : { height: "100%" }),
         p: 2,
         bgcolor: "background.paper",
         borderRadius: cardRadius,
-        boxShadow: t.cardShadow,
+        boxShadow: "none",
+        border: `1px solid ${t.dayCardBorder}`,
         display: "flex",
         flexDirection: "column",
-        gap: 1.5,
+        gap: 0,
         minHeight: 0,
         overflow: "hidden",
       }}
     >
-      {/* Day header — drag handle, day number/date, clear button */}
-      <Stack direction="row" sx={{ alignItems: "flex-start", gap: 0.75 }}>
+      <Stack
+        direction="row"
+        sx={{ alignItems: "flex-start", gap: 0.75, pb: 1.25, flexShrink: 0 }}
+      >
         {dragHandle && (
           <Box
             {...dragHandle.attributes}
@@ -169,13 +168,24 @@ export function DayBlock({
         )}
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography
-            sx={{ fontSize: 11, color: "text.secondary", fontWeight: 600 }}
+            sx={{ fontSize: 11, color: "text.secondary", fontWeight: 600, lineHeight: 1.35 }}
           >
-            Day {index + 1}
+            Day {index + 1} – {fmtDate(date)}
           </Typography>
-          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-            {fmtDate(date)}, {fmtDay(date)}
-          </Typography>
+          {routeLabel ? (
+            <Typography
+              sx={{
+                fontSize: 14,
+                fontWeight: 700,
+                mt: 0.25,
+                lineHeight: 1.35,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {routeLabel}
+            </Typography>
+          ) : null}
         </Box>
         <Tooltip title="Clear this day">
           <span>
@@ -191,8 +201,13 @@ export function DayBlock({
         </Tooltip>
       </Stack>
 
-      {/* Place */}
-      <Box>
+      <Box
+        sx={{
+          flexShrink: 0,
+          pb: 1.25,
+          borderBottom: `1px solid ${t.innerBorder}`,
+        }}
+      >
         <FieldLabel>Place</FieldLabel>
         <Autocomplete
           size="small"
@@ -206,7 +221,6 @@ export function DayBlock({
         />
       </Box>
 
-      {/* Activity blocks (scrollable internally; hidden in compact mode) */}
       {!compact && (
         <Box
           sx={{
@@ -214,42 +228,47 @@ export function DayBlock({
             minHeight: 0,
             display: "flex",
             flexDirection: "column",
+            py: 1.25,
+            borderBottom: `1px solid ${t.innerBorder}`,
           }}
         >
-          <FieldLabel>Activities</FieldLabel>
+          <FieldLabel sx={{ mb: 0.25 }}>Activities</FieldLabel>
           <Box
             sx={{
               flex: 1,
               minHeight: 0,
               overflowY: "auto",
-              overflowX: "hidden",
-              pr: 0.5,
-              mr: -0.5, // bleed scrollbar into the card padding so content lines up
+              overflowX: "clip",
+              pt: `${BLOCK_CONTROL_BLEED}px`,
+              mt: `-${BLOCK_CONTROL_BLEED}px`,
             }}
           >
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
-              onDragEnd={onBlocksDragEnd}
+              onDragEnd={onBlockDragEnd}
             >
               <SortableContext
                 items={day.activityBlocks.map((b) => b.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Stack spacing={1}>
+                <Stack
+                  spacing={1}
+                  sx={{
+                    px: `${BLOCK_CONTROL_BLEED}px`,
+                    mx: `-${BLOCK_CONTROL_BLEED}px`,
+                  }}
+                >
                   {day.activityBlocks.map((block) => (
                     <SortableItem key={block.id} id={block.id}>
                       {(handle) => (
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <ActivityBlockCard
-                            block={block}
-                            mode={mode}
-                            onChange={(next) => updateBlock(block.id, next)}
-                            onDelete={() => removeBlock(block.id)}
-                            canDelete={day.activityBlocks.length > 1}
-                            dragHandle={handle}
-                          />
-                        </Box>
+                        <ActivityBlockCard
+                          block={block}
+                          mode={mode}
+                          dragHandle={handle}
+                          onChange={(next) => updateBlock(block.id, next)}
+                          onDelete={() => removeBlock(block.id)}
+                        />
                       )}
                     </SortableItem>
                   ))}
@@ -257,63 +276,52 @@ export function DayBlock({
               </SortableContext>
             </DndContext>
           </Box>
+
           <Button
+            variant="text"
+            size="small"
             onClick={addBlock}
-            fullWidth
             sx={{
+              alignSelf: "flex-start",
               mt: 1,
-              flexShrink: 0,
-              bgcolor: t.surface,
-              color: "text.secondary",
+              px: 0.5,
+              minWidth: 0,
               fontSize: 13,
-              "&:hover": { bgcolor: t.innerBorder },
+              textTransform: "none",
             }}
           >
-            + Add Activity Block
+            + Add activity block
           </Button>
         </Box>
       )}
 
-      {/* Accommodation */}
-      <Box sx={{ flexShrink: 0 }}>
-        <FieldLabel>Accommodation</FieldLabel>
-        <TextField
-          size="small"
-          fullWidth
-          type="number"
-          placeholder="Price"
-          value={
-            day.accommodationPrice == null || Number.isNaN(day.accommodationPrice)
-              ? ""
-              : String(day.accommodationPrice)
-          }
-          onChange={(e) => {
-            const raw = e.target.value;
-            if (!raw) {
-              onChange({ ...day, accommodationPrice: undefined });
-              return;
-            }
-            const n = Number(raw);
-            onChange({ ...day, accommodationPrice: Number.isFinite(n) ? n : undefined });
-          }}
-          slotProps={{ htmlInput: { min: 0, step: 1 } }}
-        />
-      </Box>
+      <Stack
+        spacing={1.25}
+        sx={{
+          flexShrink: 0,
+          pt: 1.25,
+          ...(compact ? { mt: "auto" } : null),
+        }}
+      >
+        <Box>
+          <FieldLabel sx={{ mb: 0.25 }}>Accommodation</FieldLabel>
+          <AccommodationCard mode={mode} day={day} onChange={onChange} />
+        </Box>
 
-      {/* End the day */}
-      <Box sx={{ ...(compact ? { mt: "auto" } : null), flexShrink: 0 }}>
-        <FieldLabel>End the day at</FieldLabel>
-        <Autocomplete
-          size="small"
-          options={BALI_LOCATIONS}
-          getOptionLabel={(o) => o.name}
-          groupBy={(o) => o.region}
-          value={endValue}
-          onChange={(_, v) => updateEnd(v)}
-          isOptionEqualToValue={(o, v) => o.name === v.name}
-          renderInput={(params) => <TextField {...params} placeholder="Select" />}
-        />
-      </Box>
+        <Box>
+          <FieldLabel>End the day at</FieldLabel>
+          <Autocomplete
+            size="small"
+            options={BALI_LOCATIONS}
+            getOptionLabel={(o) => o.name}
+            groupBy={(o) => o.region}
+            value={endValue}
+            onChange={(_, v) => updateEnd(v)}
+            isOptionEqualToValue={(o, v) => o.name === v.name}
+            renderInput={(params) => <TextField {...params} placeholder="Select" />}
+          />
+        </Box>
+      </Stack>
     </Paper>
   );
 }

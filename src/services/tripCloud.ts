@@ -1,10 +1,11 @@
 import { supabase } from "../lib/supabase";
-import type { Plan } from "../types";
+import type { Plan, PersonalProfile } from "../types";
 
 export interface TripSnapshot {
   plans: Record<string, Plan>;
   planOrder: string[];
   activeTemplate: string;
+  profiles?: Record<string, PersonalProfile>;
 }
 
 export interface CloudTripRow {
