@@ -67,6 +67,7 @@ import { colorForTemplate } from "./utils/palette";
 import { useRouteLegs } from "./hooks/useRouteLegs";
 import { useCloudTrip } from "./hooks/useCloudTrip";
 import { useIsMobile } from "./hooks/useIsMobile";
+import { useViewportHeight } from "./hooks/useViewportHeight";
 import type { TripSnapshot } from "./services/tripCloud";
 import {
   deleteProfilePasscode,
@@ -220,6 +221,7 @@ export default function App() {
   const t = tokens(themeMode);
   const theme = useMemo(() => buildTheme(themeMode), [themeMode]);
   const isMobile = useIsMobile();
+  useViewportHeight(isMobile);
 
   const totalAccommodation = useMemo(
     () => computeTotalAccommodation(active?.days ?? []),
@@ -523,7 +525,16 @@ export default function App() {
       <Box
         sx={{
           p: isMobile ? 0 : { xs: 1.5, md: 2.5 },
-          height: "100vh",
+          ...(isMobile
+            ? {
+                position: "fixed",
+                top: "var(--app-offset-top, 0px)",
+                left: 0,
+                right: 0,
+                height: "var(--app-height, 100dvh)",
+                maxHeight: "var(--app-height, 100dvh)",
+              }
+            : { height: "100vh" }),
           display: "flex",
           flexDirection: "column",
           gap: isMobile ? 0 : 2,
