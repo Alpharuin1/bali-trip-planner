@@ -26,6 +26,7 @@ export const DELETE_CONTROL_BLEED = DELETE_CONTROL_SIZE / 2 + 2;
 /** Bleed room in scroll areas without shrinking block width. */
 export const BLOCK_CONTROL_BLEED = CONTROL_SIZE / 2 + 1;
 const DELETE_CONTROL_Z = 1400;
+const LOCAL_CONTROL_Z = 2;
 
 /** Scroll/list wrapper — edge controls bleed into this padding instead of being clipped. */
 export const blockListScrollBleedSx = {
@@ -90,10 +91,9 @@ export function BlockCardShell({
         position: "relative",
         overflow: "visible",
         width: "100%",
-        zIndex: showDeleteAlways ? DELETE_CONTROL_Z : undefined,
-        "&:hover": { zIndex: DELETE_CONTROL_Z },
         ...(!showDeleteAlways
           ? {
+              "&:hover": { zIndex: DELETE_CONTROL_Z },
               "&:hover .block-hover-control": {
                 opacity: 1,
                 pointerEvents: "auto",
@@ -130,7 +130,7 @@ export function BlockCardShell({
               left: 0,
               top: "50%",
               transform: "translate(-50%, -50%)",
-              zIndex: DELETE_CONTROL_Z,
+              zIndex: showDeleteAlways ? LOCAL_CONTROL_Z : DELETE_CONTROL_Z,
               cursor: "grab",
               "&:active": { cursor: "grabbing" },
               "&:hover": { color: "text.primary" },
@@ -155,7 +155,7 @@ export function BlockCardShell({
               top: 0,
               right: 0,
               transform: "translate(50%, -50%)",
-              zIndex: DELETE_CONTROL_Z,
+              zIndex: showDeleteAlways ? LOCAL_CONTROL_Z : DELETE_CONTROL_Z,
               p: 0,
               m: 0,
               cursor: "pointer",

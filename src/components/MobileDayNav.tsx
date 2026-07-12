@@ -61,7 +61,7 @@ export function MobileDayNav({
             position: "fixed",
             inset: 0,
             bgcolor: "rgba(16, 24, 40, 0.24)",
-            zIndex: 1200,
+            zIndex: (theme) => theme.zIndex.modal,
           }}
         />
       ) : null}
@@ -76,7 +76,7 @@ export function MobileDayNav({
           boxShadow: "none",
           bgcolor: "background.paper",
           position: "relative",
-          zIndex: 1201,
+          zIndex: (theme) => theme.zIndex.modal + 1,
         }}
       >
         <Box sx={{ position: "relative" }}>
@@ -93,6 +93,7 @@ export function MobileDayNav({
                 border: `1px solid ${t.innerBorder}`,
                 borderRadius: "12px",
                 boxShadow: (theme) => theme.shadows[8],
+                zIndex: 1,
                 maxHeight: "min(50vh, 360px)",
                 overflowY: "auto",
                 overflowX: "hidden",
