@@ -71,6 +71,8 @@ export interface ClothingBlock {
 export interface PersonalDay {
   id: string;
   clothingBlocks: ClothingBlock[];
+  /** Personal travel bookings (flights, ferries, etc.) — same shape as squad activity blocks. */
+  travelBlocks: ActivityBlock[];
   notes?: string;
 }
 

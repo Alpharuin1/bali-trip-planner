@@ -25,12 +25,13 @@ import {
 } from "@dnd-kit/sortable";
 
 import { FieldLabel } from "./FieldLabel";
+import { ActivityBlockCard } from "./ActivityBlockCard";
 import { ClothingBlockCard } from "./ClothingBlockCard";
 import { blockListScrollBleedSx } from "./BlockCardShell";
 import { SortableItem, type DragHandleProps } from "./SortableItem";
-import type { ClothingBlock, Day, PersonalDay, ThemeMode } from "../types";
+import type { ActivityBlock, ClothingBlock, Day, PersonalDay, ThemeMode } from "../types";
 import { fmtDate, fmtDay } from "../utils/date";
-import { formatDayRouteLabel } from "../utils/plan";
+import { blankBlock, formatDayRouteLabel } from "../utils/plan";
 import { blankClothingBlock, reconcilePersonalDayWithSquad } from "../utils/personalPlan";
 import { PERSONAL_DAY_CARD_WIDTH } from "../layout";
 import { tokens } from "../theme";
@@ -81,9 +82,31 @@ export function PersonalDayBlock({
   );
 
   const { outfitBlocks, activityBlocks } = splitClothingBlocks(day.clothingBlocks);
+  const travelBlocks = day.travelBlocks ?? [];
 
   const setBlocks = (outfits: ClothingBlock[], activities: ClothingBlock[]) =>
     onChange({ ...day, clothingBlocks: mergeClothingBlocks(outfits, activities) });
+
+  const setTravelBlocks = (blocks: ActivityBlock[]) =>
+    onChange({ ...day, travelBlocks: blocks });
+
+  const updateTravelBlock = (id: string, next: ActivityBlock) =>
+    setTravelBlocks(travelBlocks.map((b) => (b.id === id ? next : b)));
+
+  const addTravelBlock = () =>
+    setTravelBlocks([...travelBlocks, blankBlock(travelBlocks.length + 1)]);
+
+  const removeTravelBlock = (id: string) =>
+    setTravelBlocks(travelBlocks.filter((b) => b.id !== id));
+
+  const onTravelDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = travelBlocks.findIndex((b) => b.id === active.id);
+    const newIdx = travelBlocks.findIndex((b) => b.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    setTravelBlocks(arrayMove(travelBlocks, oldIdx, newIdx));
+  };
 
   const updateBlock = (id: string, next: ClothingBlock) =>
     onChange({
@@ -130,7 +153,10 @@ export function PersonalDayBlock({
 
   const clearDay = () =>
     onChange(
-      reconcilePersonalDayWithSquad({ ...day, clothingBlocks: [] }, squadDay)
+      reconcilePersonalDayWithSquad(
+        { ...day, clothingBlocks: [], travelBlocks: [] },
+        squadDay
+      )
     );
 
   const squadPlace = squadDay?.place ?? "";
@@ -278,6 +304,51 @@ export function PersonalDayBlock({
 
           <Button
             onClick={addOutfitBlock}
+            fullWidth
+            sx={{
+              mt: 1.25,
+              bgcolor: t.surface,
+              color: "text.secondary",
+              fontSize: 13,
+              "&:hover": { bgcolor: t.innerBorder },
+            }}
+          >
+            + Add block
+          </Button>
+
+          <Divider sx={{ mt: 1.5, mb: 1.25 }} />
+
+          <FieldLabel>Travel</FieldLabel>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onTravelDragEnd}
+          >
+            <SortableContext
+              items={travelBlocks.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Stack spacing={1} sx={{ mt: 0.75 }}>
+                {travelBlocks.map((block) => (
+                  <SortableItem key={block.id} id={block.id}>
+                    {(handle) => (
+                      <ActivityBlockCard
+                        block={block}
+                        mode={mode}
+                        dragHandle={handle}
+                        namePlaceholder="Travel item"
+                        onChange={(next) => updateTravelBlock(block.id, next)}
+                        onDelete={() => removeTravelBlock(block.id)}
+                      />
+                    )}
+                  </SortableItem>
+                ))}
+              </Stack>
+            </SortableContext>
+          </DndContext>
+
+          <Button
+            onClick={addTravelBlock}
             fullWidth
             sx={{
               mt: 1.25,

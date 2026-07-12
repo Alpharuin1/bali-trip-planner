@@ -10,6 +10,7 @@ interface ActivityBlockCardProps {
   onDelete?: () => void;
   dragHandle?: DragHandleProps;
   borderless?: boolean;
+  namePlaceholder?: string;
   showDeleteAlways?: boolean;
 }
 
@@ -21,6 +22,7 @@ export function ActivityBlockCard({
   dragHandle,
   borderless = false,
   showDeleteAlways = false,
+  namePlaceholder = "Activity name",
 }: ActivityBlockCardProps) {
   const link = block.activities[0]?.text ?? "";
 
@@ -42,7 +44,7 @@ export function ActivityBlockCard({
       <FieldLinkFields
         mode={mode}
         name={block.name}
-        namePlaceholder="Activity name"
+        namePlaceholder={namePlaceholder}
         link={link}
         attachment={block.attachment}
         onNameChange={(name) => onChange({ ...block, name })}

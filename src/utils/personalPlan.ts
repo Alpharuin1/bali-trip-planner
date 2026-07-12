@@ -1,5 +1,5 @@
 import type { ClothingBlock, ClothingItem, Day, PersonalDay, PersonalProfile } from "../types";
-import { newId } from "./plan";
+import { newId, normalizeDayActivityBlocks } from "./plan";
 import { linkLabel, normalizeUrl } from "./links";
 
 export const SQUAD_SIZE = 7;
@@ -26,6 +26,7 @@ export const blankClothingBlock = (n = 1): ClothingBlock => ({
 export const blankPersonalDay = (): PersonalDay => ({
   id: newId("pday"),
   clothingBlocks: [],
+  travelBlocks: [],
   notes: "",
 });
 
@@ -111,6 +112,7 @@ export const ensureProfileIds = (profile: PersonalProfile): PersonalProfile => (
     ...d,
     id: d.id ?? newId("pday"),
     notes: d.notes ?? "",
+    travelBlocks: normalizeDayActivityBlocks(d.travelBlocks ?? []),
     clothingBlocks: (d.clothingBlocks ?? []).map((b) => ({
       ...b,
       id: b.id ?? newId("cloth"),
