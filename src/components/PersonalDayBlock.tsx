@@ -282,42 +282,6 @@ export function PersonalDayBlock({
             ...blockListScrollBleedSx,
           }}
         >
-          <FieldLabel>Outfits</FieldLabel>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={onOutfitDragEnd}
-          >
-            <SortableContext
-              items={outfitBlocks.map((b) => b.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Stack spacing={1} sx={{ mt: 0.75 }}>
-                {outfitBlocks.map((block) => (
-                  <SortableItem key={block.id} id={block.id}>
-                    {(handle) => renderBlock(block, handle)}
-                  </SortableItem>
-                ))}
-              </Stack>
-            </SortableContext>
-          </DndContext>
-
-          <Button
-            onClick={addOutfitBlock}
-            fullWidth
-            sx={{
-              mt: 1.25,
-              bgcolor: t.surface,
-              color: "text.secondary",
-              fontSize: 13,
-              "&:hover": { bgcolor: t.innerBorder },
-            }}
-          >
-            + Add block
-          </Button>
-
-          <Divider sx={{ mt: 1.5, mb: 1.25 }} />
-
           <FieldLabel>Travel</FieldLabel>
           <DndContext
             sensors={sensors}
@@ -349,6 +313,42 @@ export function PersonalDayBlock({
 
           <Button
             onClick={addTravelBlock}
+            fullWidth
+            sx={{
+              mt: 1.25,
+              bgcolor: t.surface,
+              color: "text.secondary",
+              fontSize: 13,
+              "&:hover": { bgcolor: t.innerBorder },
+            }}
+          >
+            + Add block
+          </Button>
+
+          <Divider sx={{ mt: 1.5, mb: 1.25 }} />
+
+          <FieldLabel>Outfits</FieldLabel>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onOutfitDragEnd}
+          >
+            <SortableContext
+              items={outfitBlocks.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Stack spacing={1} sx={{ mt: 0.75 }}>
+                {outfitBlocks.map((block) => (
+                  <SortableItem key={block.id} id={block.id}>
+                    {(handle) => renderBlock(block, handle)}
+                  </SortableItem>
+                ))}
+              </Stack>
+            </SortableContext>
+          </DndContext>
+
+          <Button
+            onClick={addOutfitBlock}
             fullWidth
             sx={{
               mt: 1.25,
