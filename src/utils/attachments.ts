@@ -3,7 +3,10 @@ import type { FileAttachment } from "../types";
 /** Keep attachments small enough for JSON cloud sync. */
 export const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
-export const PDF_ATTACHMENT_ACCEPT = ".pdf,application/pdf";
+export const BOOKING_ATTACHMENT_ACCEPT =
+  ".pdf,application/pdf,image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp";
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -28,21 +31,48 @@ export function isPdfFile(file: File): boolean {
   return file.name.toLowerCase().endsWith(".pdf");
 }
 
+export function isImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const lower = file.name.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+export function isSupportedBookingFile(file: File): boolean {
+  return isPdfFile(file) || isImageFile(file);
+}
+
+export function isImageAttachment(attachment: FileAttachment): boolean {
+  if (attachment.mimeType.startsWith("image/")) return true;
+  const lower = attachment.name.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+function mimeTypeForFile(file: File): string {
+  if (file.type) return file.type;
+  const lower = file.name.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return "application/octet-stream";
+}
+
 export async function fileToAttachment(file: File): Promise<FileAttachment> {
-  if (!isPdfFile(file)) {
-    throw new Error("Only PDF files are supported.");
+  if (!isSupportedBookingFile(file)) {
+    throw new Error("Only PDF and image files are supported.");
   }
 
   if (file.size > MAX_ATTACHMENT_BYTES) {
     throw new Error(
-      `PDF is too large (${formatFileSize(file.size)}). Max ${formatFileSize(MAX_ATTACHMENT_BYTES)}.`
+      `File is too large (${formatFileSize(file.size)}). Max ${formatFileSize(MAX_ATTACHMENT_BYTES)}.`
     );
   }
 
   const dataUrl = await readFileAsDataUrl(file);
   return {
     name: file.name,
-    mimeType: "application/pdf",
+    mimeType: mimeTypeForFile(file),
     dataUrl,
   };
 }

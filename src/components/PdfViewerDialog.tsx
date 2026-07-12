@@ -11,7 +11,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import type { FileAttachment } from "../types";
-import { downloadAttachment } from "../utils/attachments";
+import { downloadAttachment, isImageAttachment } from "../utils/attachments";
 
 interface PdfViewerDialogProps {
   attachment: FileAttachment | null;
@@ -21,6 +21,8 @@ interface PdfViewerDialogProps {
 
 export function PdfViewerDialog({ attachment, open, onClose }: PdfViewerDialogProps) {
   if (!attachment) return null;
+
+  const isImage = isImageAttachment(attachment);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -38,7 +40,7 @@ export function PdfViewerDialog({ attachment, open, onClose }: PdfViewerDialogPr
           >
             {attachment.name}
           </Typography>
-          <Tooltip title="Download PDF">
+          <Tooltip title="Download">
             <IconButton size="small" onClick={() => downloadAttachment(attachment)}>
               <FileDownloadOutlinedIcon fontSize="small" />
             </IconButton>
@@ -48,19 +50,42 @@ export function PdfViewerDialog({ attachment, open, onClose }: PdfViewerDialogPr
           </IconButton>
         </Stack>
       </DialogTitle>
-      <DialogContent sx={{ p: 0, height: { xs: "70vh", md: "80vh" } }}>
-        <Box
-          component="iframe"
-          src={attachment.dataUrl}
-          title={attachment.name}
-          sx={{
-            display: "block",
-            width: "100%",
-            height: "100%",
-            border: 0,
-            bgcolor: "background.default",
-          }}
-        />
+      <DialogContent
+        sx={{
+          p: isImage ? 2 : 0,
+          height: { xs: "70vh", md: "80vh" },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: isImage ? "background.default" : undefined,
+        }}
+      >
+        {isImage ? (
+          <Box
+            component="img"
+            src={attachment.dataUrl}
+            alt={attachment.name}
+            sx={{
+              display: "block",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+            }}
+          />
+        ) : (
+          <Box
+            component="iframe"
+            src={attachment.dataUrl}
+            title={attachment.name}
+            sx={{
+              display: "block",
+              width: "100%",
+              height: "100%",
+              border: 0,
+              bgcolor: "background.default",
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

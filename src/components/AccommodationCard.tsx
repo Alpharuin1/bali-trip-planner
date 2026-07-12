@@ -76,7 +76,7 @@ export function AccommodationCard({ mode, day, onChange, borderless = false }: A
         <AttachmentControl
           attachment={day.accommodationAttachment}
           mode={mode}
-          buttonLabel="Attach booking PDF"
+          buttonLabel="Attach Booking"
           onChange={(accommodationAttachment) => onChange({ ...day, accommodationAttachment })}
         />
 

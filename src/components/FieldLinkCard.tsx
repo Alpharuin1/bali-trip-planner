@@ -49,7 +49,7 @@ export function FieldLinkFields({
         <AttachmentControl
           attachment={attachment}
           mode={mode}
-          buttonLabel="Attach PDF"
+          buttonLabel="Attach Booking"
           onChange={onAttachmentChange}
         />
       ) : null}

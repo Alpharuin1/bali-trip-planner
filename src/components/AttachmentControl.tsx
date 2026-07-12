@@ -8,10 +8,15 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import type { FileAttachment, ThemeMode } from "../types";
-import { fileToAttachment, PDF_ATTACHMENT_ACCEPT } from "../utils/attachments";
+import {
+  BOOKING_ATTACHMENT_ACCEPT,
+  fileToAttachment,
+  isImageAttachment,
+} from "../utils/attachments";
 import { tokens } from "../theme";
 import { PdfViewerDialog } from "./PdfViewerDialog";
 
@@ -26,7 +31,7 @@ export function AttachmentControl({
   attachment,
   mode,
   onChange,
-  buttonLabel = "Attach PDF",
+  buttonLabel = "Attach Booking",
 }: AttachmentControlProps) {
   const t = tokens(mode);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,13 +56,17 @@ export function AttachmentControl({
       setError(null);
       onChange(await fileToAttachment(file));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not attach PDF.");
+      setError(err instanceof Error ? err.message : "Could not attach booking.");
     } finally {
       if (inputRef.current) inputRef.current.value = "";
     }
   };
 
   if (attachment) {
+    const AttachmentIcon = isImageAttachment(attachment)
+      ? ImageOutlinedIcon
+      : PictureAsPdfOutlinedIcon;
+
     return (
       <>
         <Box
@@ -74,7 +83,7 @@ export function AttachmentControl({
             "&:hover": { bgcolor: t.surface },
           }}
         >
-          <PictureAsPdfOutlinedIcon
+          <AttachmentIcon
             sx={{ fontSize: 15, color: "text.secondary", flexShrink: 0 }}
           />
           <Button
@@ -108,7 +117,7 @@ export function AttachmentControl({
               pointerEvents: showActions ? "auto" : "none",
             }}
           >
-            <Tooltip title="Remove PDF">
+            <Tooltip title="Remove booking">
               <IconButton size="small" onClick={() => onChange(undefined)} sx={{ p: 0.375 }}>
                 <CloseIcon sx={{ fontSize: 15 }} />
               </IconButton>
@@ -131,7 +140,7 @@ export function AttachmentControl({
         ref={inputRef}
         type="file"
         hidden
-        accept={PDF_ATTACHMENT_ACCEPT}
+        accept={BOOKING_ATTACHMENT_ACCEPT}
         onChange={(e) => void handlePick(e.target.files?.[0] ?? null)}
       />
       <Button

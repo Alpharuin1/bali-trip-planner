@@ -29,7 +29,7 @@ import { formatDayRouteLabel } from "../utils/plan";
 import type { TripSnapshot } from "../services/tripCloud";
 import {
   buildOfflineBundle,
-  countEmbeddedPdfs,
+  countEmbeddedBookings,
   downloadOfflineBundle,
   parseOfflineBundleFile,
 } from "../utils/tripExport";
@@ -67,7 +67,7 @@ export function MobileTripHeader({
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingMeta, setPendingMeta] = useState<{ pdfCount: number; exportedAt: string } | null>(
+  const [pendingMeta, setPendingMeta] = useState<{ bookingCount: number; exportedAt: string } | null>(
     null
   );
 
@@ -97,12 +97,12 @@ export function MobileTripHeader({
   const handleDownload = () => {
     try {
       downloadOfflineBundle(buildOfflineBundle(snapshot));
-      const pdfCount = countEmbeddedPdfs(snapshot);
+      const bookingCount = countEmbeddedBookings(snapshot);
       setMessage({
         kind: "success",
         text:
-          pdfCount > 0
-            ? `Downloaded backup with ${pdfCount} booking PDF${pdfCount === 1 ? "" : "s"}.`
+          bookingCount > 0
+            ? `Downloaded backup with ${bookingCount} booking attachment${bookingCount === 1 ? "" : "s"}.`
             : "Downloaded offline backup.",
       });
     } catch (err: unknown) {
@@ -119,7 +119,7 @@ export function MobileTripHeader({
       const bundle = await parseOfflineBundleFile(file);
       setPendingFile(file);
       setPendingMeta({
-        pdfCount: countEmbeddedPdfs(bundle.snapshot),
+        bookingCount: countEmbeddedBookings(bundle.snapshot),
         exportedAt: bundle.exportedAt
           ? new Date(bundle.exportedAt).toLocaleString()
           : "unknown date",
@@ -141,12 +141,12 @@ export function MobileTripHeader({
       try {
         const bundle = await parseOfflineBundleFile(pendingFile);
         onImportSnapshot(bundle.snapshot);
-        const pdfCount = countEmbeddedPdfs(bundle.snapshot);
+        const bookingCount = countEmbeddedBookings(bundle.snapshot);
         setMessage({
           kind: "success",
           text:
-            pdfCount > 0
-              ? `Loaded backup with ${pdfCount} booking PDF${pdfCount === 1 ? "" : "s"}.`
+            bookingCount > 0
+              ? `Loaded backup with ${bookingCount} booking attachment${bookingCount === 1 ? "" : "s"}.`
               : "Loaded offline backup.",
         });
       } catch (err: unknown) {
@@ -344,8 +344,8 @@ export function MobileTripHeader({
           <DialogContentText>
             This replaces your current trip on this device with the backup
             {pendingMeta?.exportedAt ? ` from ${pendingMeta.exportedAt}` : ""}.
-            {pendingMeta && pendingMeta.pdfCount > 0
-              ? ` It includes ${pendingMeta.pdfCount} booking PDF${pendingMeta.pdfCount === 1 ? "" : "s"}.`
+            {pendingMeta && pendingMeta.bookingCount > 0
+              ? ` It includes ${pendingMeta.bookingCount} booking attachment${pendingMeta.bookingCount === 1 ? "" : "s"}.`
               : ""}
           </DialogContentText>
         </DialogContent>

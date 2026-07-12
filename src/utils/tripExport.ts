@@ -117,8 +117,8 @@ function validateOfflineBundle(raw: unknown): OfflineTripBundle {
   };
 }
 
-/** Count embedded PDF attachments in a snapshot (for UI feedback). */
-export function countEmbeddedPdfs(snapshot: TripSnapshot): number {
+/** Count embedded booking attachments in a snapshot (for UI feedback). */
+export function countEmbeddedBookings(snapshot: TripSnapshot): number {
   let count = 0;
   for (const plan of Object.values(snapshot.plans ?? {})) {
     for (const day of plan.days ?? []) {
@@ -130,3 +130,6 @@ export function countEmbeddedPdfs(snapshot: TripSnapshot): number {
   }
   return count;
 }
+
+/** @deprecated Use countEmbeddedBookings */
+export const countEmbeddedPdfs = countEmbeddedBookings;

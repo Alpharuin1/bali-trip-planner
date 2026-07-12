@@ -22,7 +22,7 @@ export interface ActivityBlock {
   attachment?: FileAttachment;
 }
 
-/** Small booking doc stored inline (base64) so it syncs with the shared trip payload. */
+/** Booking file stored inline (base64) so it syncs with the shared trip payload. */
 export interface FileAttachment {
   name: string;
   mimeType: string;
