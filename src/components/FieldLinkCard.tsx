@@ -38,6 +38,10 @@ export function FieldLinkFields({
             bgcolor: "background.paper",
             borderRadius: "6px",
           },
+          "& .MuiOutlinedInput-input": {
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          },
         }}
       />
       <ActivityLinkControl url={link} mode={mode} onChange={onLinkChange} />

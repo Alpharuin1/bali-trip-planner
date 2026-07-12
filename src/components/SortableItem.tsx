@@ -3,6 +3,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box } from "@mui/material";
 
+const HOVER_Z = 1400;
+
 /** Render-prop value handed to children of SortableItem. */
 export type DragHandleProps = {
   listeners: ReturnType<typeof useSortable>["listeners"];
@@ -53,7 +55,8 @@ export function SortableItem({ id, fill = false, children }: SortableItemProps) 
         overflow: "visible",
         // Full width for vertical block lists only — not day cards in the horizontal strip.
         ...(fill ? null : { width: "100%" }),
-        zIndex: isDragging ? 20 : 0,
+        zIndex: isDragging ? HOVER_Z : 0,
+        "&:has(> *:hover)": { zIndex: HOVER_Z },
       }}
     >
       {children({ listeners, attributes, isDragging })}

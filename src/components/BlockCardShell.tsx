@@ -15,12 +15,27 @@ interface BlockCardShellProps {
   deleteTooltip?: string;
   borderRadius?: string;
   borderless?: boolean;
+  /** Keep the delete control visible instead of hover-only. */
+  showDeleteAlways?: boolean;
 }
 
 const CONTROL_SIZE = 22;
-/** Half control size — bleed room in scroll areas without shrinking block width. */
+const DELETE_CONTROL_SIZE = 18;
+/** Bleed room so corner delete controls are not clipped by scroll parents. */
+export const DELETE_CONTROL_BLEED = DELETE_CONTROL_SIZE / 2 + 2;
+/** Bleed room in scroll areas without shrinking block width. */
 export const BLOCK_CONTROL_BLEED = CONTROL_SIZE / 2 + 1;
-const CONTROL_Z = 20;
+const DELETE_CONTROL_Z = 1400;
+
+/** Scroll/list wrapper — edge controls bleed into this padding instead of being clipped. */
+export const blockListScrollBleedSx = {
+  pt: `${BLOCK_CONTROL_BLEED}px`,
+  mt: `-${BLOCK_CONTROL_BLEED}px`,
+  pl: `${BLOCK_CONTROL_BLEED}px`,
+  pr: `${BLOCK_CONTROL_BLEED}px`,
+  ml: `-${BLOCK_CONTROL_BLEED}px`,
+  mr: `-${BLOCK_CONTROL_BLEED}px`,
+};
 
 const controlSx = {
   opacity: 0,
@@ -37,6 +52,7 @@ export function BlockCardShell({
   deleteTooltip = "Remove block",
   borderRadius = "8px",
   borderless = false,
+  showDeleteAlways = false,
 }: BlockCardShellProps) {
   const t = tokens(mode);
   const controlBorder =
@@ -55,29 +71,47 @@ export function BlockCardShell({
     color: "text.secondary",
   };
 
+  const deleteCircleSx = {
+    width: DELETE_CONTROL_SIZE,
+    height: DELETE_CONTROL_SIZE,
+    borderRadius: "50%",
+    bgcolor: "background.paper",
+    border: `1px solid ${controlBorder}`,
+    boxShadow: "0 2px 6px rgba(16, 24, 40, 0.16)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "text.secondary",
+  };
+
   return (
     <Box
       sx={{
         position: "relative",
         overflow: "visible",
         width: "100%",
-        isolation: "isolate",
-        "&:hover": { zIndex: CONTROL_Z },
+        zIndex: showDeleteAlways ? DELETE_CONTROL_Z : undefined,
+        "&:hover": { zIndex: DELETE_CONTROL_Z },
+        ...(!showDeleteAlways
+          ? {
+              "&:hover .block-hover-control": {
+                opacity: 1,
+                pointerEvents: "auto",
+              },
+            }
+          : {}),
       }}
     >
       <Box
         sx={{
           position: "relative",
           zIndex: 0,
-          p: 1,
+          py: 0.75,
+          px: 1,
           bgcolor: t.innerSurface,
           ...(borderless ? {} : { border: `1px solid ${t.innerBorder}` }),
           borderRadius,
-          overflow: "visible",
-          "&:hover .block-hover-control": {
-            opacity: 1,
-            pointerEvents: "auto",
-          },
+          overflow: "hidden",
         }}
       >
         {children}
@@ -96,7 +130,7 @@ export function BlockCardShell({
               left: 0,
               top: "50%",
               transform: "translate(-50%, -50%)",
-              zIndex: CONTROL_Z,
+              zIndex: DELETE_CONTROL_Z,
               cursor: "grab",
               "&:active": { cursor: "grabbing" },
               "&:hover": { color: "text.primary" },
@@ -113,22 +147,22 @@ export function BlockCardShell({
             component="button"
             type="button"
             onClick={onDelete}
-            className="block-hover-control"
+            className={showDeleteAlways ? undefined : "block-hover-control"}
             sx={{
-              ...controlSx,
-              ...circleSx,
+              ...(showDeleteAlways ? {} : controlSx),
+              ...deleteCircleSx,
               position: "absolute",
               top: 0,
               right: 0,
               transform: "translate(50%, -50%)",
-              zIndex: CONTROL_Z,
+              zIndex: DELETE_CONTROL_Z,
               p: 0,
               m: 0,
               cursor: "pointer",
               "&:hover": { color: "text.primary" },
             }}
           >
-            <CloseIcon sx={{ fontSize: 13 }} />
+            <CloseIcon sx={{ fontSize: 11 }} />
           </Box>
         </Tooltip>
       )}

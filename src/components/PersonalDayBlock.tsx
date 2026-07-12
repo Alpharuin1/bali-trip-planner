@@ -26,7 +26,7 @@ import {
 
 import { FieldLabel } from "./FieldLabel";
 import { ClothingBlockCard } from "./ClothingBlockCard";
-import { BLOCK_CONTROL_BLEED } from "./BlockCardShell";
+import { blockListScrollBleedSx } from "./BlockCardShell";
 import { SortableItem, type DragHandleProps } from "./SortableItem";
 import type { ClothingBlock, Day, PersonalDay, ThemeMode } from "../types";
 import { fmtDate, fmtDay } from "../utils/date";
@@ -252,9 +252,8 @@ export function PersonalDayBlock({
           sx={{
             ...(fill ? {} : { flex: 1, minHeight: 0 }),
             overflowY: fill ? "visible" : "auto",
-            overflowX: "clip",
-            pt: `${BLOCK_CONTROL_BLEED}px`,
-            mt: `-${BLOCK_CONTROL_BLEED}px`,
+            overflowX: "hidden",
+            ...blockListScrollBleedSx,
           }}
         >
           <FieldLabel>Outfits</FieldLabel>
@@ -267,14 +266,7 @@ export function PersonalDayBlock({
               items={outfitBlocks.map((b) => b.id)}
               strategy={verticalListSortingStrategy}
             >
-              <Stack
-                spacing={1}
-                sx={{
-                  mt: 0.75,
-                  px: `${BLOCK_CONTROL_BLEED}px`,
-                  mx: `-${BLOCK_CONTROL_BLEED}px`,
-                }}
-              >
+              <Stack spacing={1} sx={{ mt: 0.75 }}>
                 {outfitBlocks.map((block) => (
                   <SortableItem key={block.id} id={block.id}>
                     {(handle) => renderBlock(block, handle)}
@@ -315,14 +307,7 @@ export function PersonalDayBlock({
                 items={activityBlocks.map((b) => b.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Stack
-                  spacing={1}
-                  sx={{
-                    mt: 0.25,
-                    px: `${BLOCK_CONTROL_BLEED}px`,
-                    mx: `-${BLOCK_CONTROL_BLEED}px`,
-                  }}
-                >
+                <Stack spacing={1} sx={{ mt: 0.25 }}>
                   {activityBlocks.map((block) => (
                     <SortableItem key={block.id} id={block.id}>
                       {(handle) => renderBlock(block, handle)}

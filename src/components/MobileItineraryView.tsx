@@ -5,6 +5,7 @@ import { addDays, parseISO } from "../utils/date";
 import { reconcilePersonalDayWithSquad } from "../utils/personalPlan";
 import { DayBlock } from "./DayBlock";
 import { PersonalDayBlock } from "./PersonalDayBlock";
+import { DELETE_CONTROL_BLEED } from "./BlockCardShell";
 import { MobileTripHeader } from "./MobileTripHeader";
 import { MobileDayNav } from "./MobileDayNav";
 import type { TripSnapshot } from "../services/tripCloud";
@@ -85,8 +86,10 @@ export function MobileItineraryView({
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
+          overflowX: "hidden",
           WebkitOverflowScrolling: "touch",
-          px: 1.5,
+          pl: 1.5,
+          pr: (theme) => `calc(${theme.spacing(1.5)} + ${DELETE_CONTROL_BLEED}px)`,
           py: 1.25,
         }}
       >

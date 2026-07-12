@@ -897,7 +897,7 @@ const PlanView = ({
                     display: "flex",
                     gap: 1.5,
                     overflowX: "auto",
-                    overflowY: "hidden",
+                    overflowY: "visible",
                     pb: 1,
                     flex: 1,
                     alignItems: "stretch",

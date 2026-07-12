@@ -28,15 +28,18 @@ import {
 import { FieldLabel } from "./FieldLabel";
 import { ActivityBlockCard } from "./ActivityBlockCard";
 import { AccommodationCard } from "./AccommodationCard";
+import { DeletedBlockSnackbar } from "./DeletedBlockSnackbar";
 import { SortableItem } from "./SortableItem";
 import { BALI_LOCATIONS, findLoc } from "../locations";
 import type { ActivityBlock, Day, Location, ThemeMode } from "../types";
 import { fmtDate } from "../utils/date";
 import { blankBlock, formatDayRouteLabel } from "../utils/plan";
 import { dayHasAccommodationContent } from "../utils/accommodation";
-import { BLOCK_CONTROL_BLEED } from "./BlockCardShell";
+import { blockListScrollBleedSx } from "./BlockCardShell";
 import { SQUAD_DAY_CARD_WIDTH } from "../layout";
 import { tokens } from "../theme";
+import { useActivityBlockDeleteUndo } from "../hooks/useActivityBlockDeleteUndo";
+import { useIsMobile } from "../hooks/useIsMobile";
 import type { DragHandleProps } from "./SortableItem";
 
 interface DayBlockProps {
@@ -84,6 +87,7 @@ export function DayBlock({
   readOnly = false,
 }: DayBlockProps) {
   const t = tokens(mode);
+  const isMobile = useIsMobile();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -96,11 +100,15 @@ export function DayBlock({
   const setBlocks = (blocks: ActivityBlock[]) =>
     onChange({ ...day, activityBlocks: blocks });
 
+  const {
+    snackbarOpen,
+    removeBlockWithUndo,
+    undoDelete,
+    dismissSnackbar,
+  } = useActivityBlockDeleteUndo(day.activityBlocks, setBlocks);
+
   const updateBlock = (id: string, next: ActivityBlock) =>
     setBlocks(day.activityBlocks.map((b) => (b.id === id ? next : b)));
-
-  const removeBlock = (id: string) =>
-    setBlocks(day.activityBlocks.filter((b) => b.id !== id));
 
   const addBlock = () =>
     setBlocks([...day.activityBlocks, blankBlock(day.activityBlocks.length + 1)]);
@@ -145,6 +153,7 @@ export function DayBlock({
     boxShadow: "none" as const,
     border: `1px solid ${t.dayCardBorder}`,
     width: "100%",
+    overflow: "visible" as const,
   };
 
   const sectionLabelSx = {
@@ -153,8 +162,20 @@ export function DayBlock({
     color: "text.disabled",
   };
 
+  const activityBlockGap = 2;
+
+  const deleteSnackbar = (
+    <DeletedBlockSnackbar
+      open={snackbarOpen}
+      isMobile={isMobile}
+      onUndo={undoDelete}
+      onClose={dismissSnackbar}
+    />
+  );
+
   if (readOnly) {
     return (
+      <>
       <Stack
         spacing={1.25}
         sx={{
@@ -170,24 +191,31 @@ export function DayBlock({
         {!compact ? (
           <Paper elevation={0} sx={sectionPaperSx}>
             <FieldLabel sx={sectionLabelSx}>Activities</FieldLabel>
-            <Stack spacing={1}>
+            <Box sx={{ ...blockListScrollBleedSx, overflowX: "hidden" }}>
+              <Stack spacing={activityBlockGap}>
               {day.activityBlocks.map((block) => (
                 <ActivityBlockCard
                   key={block.id}
                   block={block}
                   mode={mode}
                   borderless
+                  showDeleteAlways
                   onChange={(next) => updateBlock(block.id, next)}
+                  onDelete={() => removeBlockWithUndo(block.id)}
                 />
               ))}
-            </Stack>
+              </Stack>
+            </Box>
           </Paper>
         ) : null}
       </Stack>
+      {deleteSnackbar}
+      </>
     );
   }
 
   return (
+    <>
     <Paper
       elevation={0}
       onMouseEnter={() => onHover?.(true)}
@@ -199,7 +227,7 @@ export function DayBlock({
           ? { height: "auto", overflow: "visible" }
           : compact
             ? null
-            : { height: "100%", overflow: "hidden" }),
+            : { height: "100%", overflow: "visible" }),
         p: 2,
         bgcolor: "background.paper",
         borderRadius: cardRadius,
@@ -297,6 +325,7 @@ export function DayBlock({
             flexDirection: "column",
             py: 1.25,
             borderBottom: `1px solid ${t.innerBorder}`,
+            overflow: "visible",
           }}
         >
           <FieldLabel sx={{ mb: 0.25 }}>Activities</FieldLabel>
@@ -304,9 +333,8 @@ export function DayBlock({
             sx={{
               ...(fill ? {} : { flex: 1, minHeight: 0 }),
               overflowY: fill ? "visible" : "auto",
-              overflowX: "clip",
-              pt: `${BLOCK_CONTROL_BLEED}px`,
-              mt: `-${BLOCK_CONTROL_BLEED}px`,
+              overflowX: "hidden",
+              ...blockListScrollBleedSx,
             }}
           >
             <DndContext
@@ -318,13 +346,7 @@ export function DayBlock({
                 items={day.activityBlocks.map((b) => b.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Stack
-                  spacing={1}
-                  sx={{
-                    px: `${BLOCK_CONTROL_BLEED}px`,
-                    mx: `-${BLOCK_CONTROL_BLEED}px`,
-                  }}
-                >
+                <Stack spacing={1}>
                   {day.activityBlocks.map((block) => (
                     <SortableItem key={block.id} id={block.id}>
                       {(handle) => (
@@ -333,7 +355,7 @@ export function DayBlock({
                           mode={mode}
                           dragHandle={handle}
                           onChange={(next) => updateBlock(block.id, next)}
-                          onDelete={() => removeBlock(block.id)}
+                          onDelete={() => removeBlockWithUndo(block.id)}
                         />
                       )}
                     </SortableItem>
@@ -389,5 +411,7 @@ export function DayBlock({
         </Box>
       </Stack>
     </Paper>
+    {deleteSnackbar}
+    </>
   );
 }

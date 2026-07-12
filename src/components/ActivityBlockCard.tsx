@@ -10,6 +10,7 @@ interface ActivityBlockCardProps {
   onDelete?: () => void;
   dragHandle?: DragHandleProps;
   borderless?: boolean;
+  showDeleteAlways?: boolean;
 }
 
 export function ActivityBlockCard({
@@ -19,6 +20,7 @@ export function ActivityBlockCard({
   onDelete,
   dragHandle,
   borderless = false,
+  showDeleteAlways = false,
 }: ActivityBlockCardProps) {
   const link = block.activities[0]?.text ?? "";
 
@@ -30,7 +32,13 @@ export function ActivityBlockCard({
   };
 
   return (
-    <BlockCardShell mode={mode} dragHandle={dragHandle} onDelete={onDelete} borderless={borderless}>
+    <BlockCardShell
+      mode={mode}
+      dragHandle={dragHandle}
+      onDelete={onDelete}
+      borderless={borderless}
+      showDeleteAlways={showDeleteAlways}
+    >
       <FieldLinkFields
         mode={mode}
         name={block.name}
