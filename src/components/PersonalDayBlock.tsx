@@ -46,6 +46,10 @@ interface PersonalDayBlockProps {
   onChange: (next: PersonalDay) => void;
   cardRadius?: string | number;
   dragHandle?: DragHandleProps;
+  /** Full-width card for mobile single-day layout. */
+  fill?: boolean;
+  /** Hide day title row (shown in mobile header instead). */
+  hideHeader?: boolean;
 }
 
 function splitClothingBlocks(blocks: ClothingBlock[]) {
@@ -68,6 +72,8 @@ export function PersonalDayBlock({
   onChange,
   cardRadius = "12px",
   dragHandle,
+  fill = false,
+  hideHeader = false,
 }: PersonalDayBlockProps) {
   const t = tokens(mode);
   const sensors = useSensors(
@@ -150,18 +156,22 @@ export function PersonalDayBlock({
   return (
     <Paper
       elevation={0}
-      onClick={onFocus}
-      tabIndex={onFocus ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (onFocus && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onFocus();
-        }
-      }}
+      onClick={fill ? undefined : onFocus}
+      tabIndex={fill ? undefined : onFocus ? 0 : undefined}
+      onKeyDown={
+        fill
+          ? undefined
+          : (e) => {
+              if (onFocus && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onFocus();
+              }
+            }
+      }
       sx={{
-        width: PERSONAL_DAY_CARD_WIDTH,
-        flexShrink: 0,
-        height: "100%",
+        width: fill ? "100%" : PERSONAL_DAY_CARD_WIDTH,
+        flexShrink: fill ? 1 : 0,
+        height: fill ? "auto" : "100%",
         p: 2,
         bgcolor: "background.paper",
         borderRadius: cardRadius,
@@ -174,11 +184,12 @@ export function PersonalDayBlock({
         flexDirection: "column",
         gap: 0,
         minHeight: 0,
-        overflow: "hidden",
+        overflow: fill ? "visible" : "hidden",
         outline: "none",
-        cursor: onFocus ? "pointer" : undefined,
+        cursor: fill ? undefined : onFocus ? "pointer" : undefined,
       }}
     >
+      {!hideHeader ? (
       <Stack
         direction="row"
         sx={{ alignItems: "flex-start", gap: 0.75, pb: 1.25, flexShrink: 0 }}
@@ -226,22 +237,21 @@ export function PersonalDayBlock({
           </IconButton>
         </Tooltip>
       </Stack>
+      ) : null}
 
       <Box
         sx={{
-          flex: 1,
-          minHeight: 0,
+          ...(fill ? {} : { flex: 1, minHeight: 0 }),
           display: "flex",
           flexDirection: "column",
-          py: 1.25,
-          borderTop: `1px solid ${t.innerBorder}`,
+          py: hideHeader ? 0 : 1.25,
+          borderTop: hideHeader ? "none" : `1px solid ${t.innerBorder}`,
         }}
       >
         <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
+            ...(fill ? {} : { flex: 1, minHeight: 0 }),
+            overflowY: fill ? "visible" : "auto",
             overflowX: "clip",
             pt: `${BLOCK_CONTROL_BLEED}px`,
             mt: `-${BLOCK_CONTROL_BLEED}px`,

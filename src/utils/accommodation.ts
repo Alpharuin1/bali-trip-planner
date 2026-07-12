@@ -53,6 +53,7 @@ export function computeTotalAccommodation(days: Day[]): number {
 export function dayHasAccommodationContent(day: Day): boolean {
   return Boolean(
     day.accommodationLink?.trim() ||
+      day.accommodationAttachment ||
       accommodationTotalPrice(day) != null ||
       (typeof day.accommodationNights === "number" &&
         Number.isFinite(day.accommodationNights) &&

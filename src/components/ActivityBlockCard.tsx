@@ -7,8 +7,9 @@ interface ActivityBlockCardProps {
   block: ActivityBlock;
   mode: ThemeMode;
   onChange: (next: ActivityBlock) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   dragHandle?: DragHandleProps;
+  borderless?: boolean;
 }
 
 export function ActivityBlockCard({
@@ -17,6 +18,7 @@ export function ActivityBlockCard({
   onChange,
   onDelete,
   dragHandle,
+  borderless = false,
 }: ActivityBlockCardProps) {
   const link = block.activities[0]?.text ?? "";
 
@@ -28,14 +30,16 @@ export function ActivityBlockCard({
   };
 
   return (
-    <BlockCardShell mode={mode} dragHandle={dragHandle} onDelete={onDelete}>
+    <BlockCardShell mode={mode} dragHandle={dragHandle} onDelete={onDelete} borderless={borderless}>
       <FieldLinkFields
         mode={mode}
         name={block.name}
         namePlaceholder="Activity name"
         link={link}
+        attachment={block.attachment}
         onNameChange={(name) => onChange({ ...block, name })}
         onLinkChange={setLink}
+        onAttachmentChange={(attachment) => onChange({ ...block, attachment })}
       />
     </BlockCardShell>
   );

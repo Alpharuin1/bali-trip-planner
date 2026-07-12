@@ -4,6 +4,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import type { Day, ThemeMode } from "../types";
 import { tokens } from "../theme";
 import { ActivityLinkControl } from "./ActivityLinkControl";
+import { AttachmentControl } from "./AttachmentControl";
 import { FieldLabel } from "./FieldLabel";
 
 const fieldSx = {
@@ -24,6 +25,7 @@ interface AccommodationCardProps {
   mode: ThemeMode;
   day: Day;
   onChange: (next: Day) => void;
+  borderless?: boolean;
 }
 
 function parseOptionalInt(raw: string): number | undefined {
@@ -40,7 +42,7 @@ function parseOptionalPrice(raw: string): number | undefined {
   return n;
 }
 
-export function AccommodationCard({ mode, day, onChange }: AccommodationCardProps) {
+export function AccommodationCard({ mode, day, onChange, borderless = false }: AccommodationCardProps) {
   const t = tokens(mode);
 
   const adjustNights = (delta: number) => {
@@ -57,7 +59,7 @@ export function AccommodationCard({ mode, day, onChange }: AccommodationCardProp
       sx={{
         p: 1,
         bgcolor: t.innerSurface,
-        border: `1px solid ${t.innerBorder}`,
+        ...(borderless ? {} : { border: `1px solid ${t.innerBorder}` }),
         borderRadius: "8px",
         width: "100%",
       }}
@@ -69,6 +71,13 @@ export function AccommodationCard({ mode, day, onChange }: AccommodationCardProp
           inline
           textFieldSx={fieldSx}
           onChange={(accommodationLink) => onChange({ ...day, accommodationLink })}
+        />
+
+        <AttachmentControl
+          attachment={day.accommodationAttachment}
+          mode={mode}
+          buttonLabel="Attach booking PDF"
+          onChange={(accommodationAttachment) => onChange({ ...day, accommodationAttachment })}
         />
 
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "flex-end" }}>

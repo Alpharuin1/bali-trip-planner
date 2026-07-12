@@ -14,6 +14,7 @@ interface BlockCardShellProps {
   canDelete?: boolean;
   deleteTooltip?: string;
   borderRadius?: string;
+  borderless?: boolean;
 }
 
 const CONTROL_SIZE = 22;
@@ -35,6 +36,7 @@ export function BlockCardShell({
   canDelete = true,
   deleteTooltip = "Remove block",
   borderRadius = "8px",
+  borderless = false,
 }: BlockCardShellProps) {
   const t = tokens(mode);
   const controlBorder =
@@ -69,7 +71,7 @@ export function BlockCardShell({
           zIndex: 0,
           p: 1,
           bgcolor: t.innerSurface,
-          border: `1px solid ${t.innerBorder}`,
+          ...(borderless ? {} : { border: `1px solid ${t.innerBorder}` }),
           borderRadius,
           overflow: "visible",
           "&:hover .block-hover-control": {

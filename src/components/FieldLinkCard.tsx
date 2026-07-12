@@ -1,15 +1,18 @@
 import { Box, Stack, TextField } from "@mui/material";
-import type { ThemeMode } from "../types";
+import type { FileAttachment, ThemeMode } from "../types";
 import { tokens } from "../theme";
 import { ActivityLinkControl } from "./ActivityLinkControl";
+import { AttachmentControl } from "./AttachmentControl";
 
 interface FieldLinkFieldsProps {
   mode: ThemeMode;
   name: string;
   namePlaceholder: string;
   link: string;
+  attachment?: FileAttachment;
   onNameChange: (name: string) => void;
   onLinkChange: (link: string) => void;
+  onAttachmentChange?: (attachment: FileAttachment | undefined) => void;
 }
 
 export function FieldLinkFields({
@@ -17,8 +20,10 @@ export function FieldLinkFields({
   name,
   namePlaceholder,
   link,
+  attachment,
   onNameChange,
   onLinkChange,
+  onAttachmentChange,
 }: FieldLinkFieldsProps) {
   return (
     <Stack spacing={0.75} sx={{ width: "100%" }}>
@@ -36,6 +41,14 @@ export function FieldLinkFields({
         }}
       />
       <ActivityLinkControl url={link} mode={mode} onChange={onLinkChange} />
+      {onAttachmentChange ? (
+        <AttachmentControl
+          attachment={attachment}
+          mode={mode}
+          buttonLabel="Attach PDF"
+          onChange={onAttachmentChange}
+        />
+      ) : null}
     </Stack>
   );
 }

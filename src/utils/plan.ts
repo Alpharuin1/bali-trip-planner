@@ -117,6 +117,7 @@ export const ensureIds = (plan: Plan): Plan => ({
         : undefined,
     accommodationName: (d as any).accommodationName ?? "",
     accommodationLink: (d as any).accommodationLink ?? "",
+    accommodationAttachment: (d as any).accommodationAttachment,
     activityBlocks: normalizeDayActivityBlocks(d.activityBlocks ?? []),
   })),
 });

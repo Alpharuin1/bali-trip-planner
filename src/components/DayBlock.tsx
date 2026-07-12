@@ -53,10 +53,20 @@ interface DayBlockProps {
   dragHandle?: DragHandleProps;
   /** Card → marker hover-link callback (no visual change on the card itself). */
   onHover?: (hovered: boolean) => void;
+  /** Full-width card for mobile single-day layout. */
+  fill?: boolean;
+  /** Hide day title row (shown in mobile header instead). */
+  hideHeader?: boolean;
+  /** Mobile read-only layout: hide place fields, accom first, no add/reorder. */
+  readOnly?: boolean;
 }
 
 function blockHasContent(block: ActivityBlock): boolean {
-  return Boolean(block.name.trim() || block.activities.some((a) => a.text.trim()));
+  return Boolean(
+    block.name.trim() ||
+      block.activities.some((a) => a.text.trim()) ||
+      block.attachment
+  );
 }
 
 export function DayBlock({
@@ -69,6 +79,9 @@ export function DayBlock({
   cardRadius = "12px",
   dragHandle,
   onHover,
+  fill = false,
+  hideHeader = false,
+  readOnly = false,
 }: DayBlockProps) {
   const t = tokens(mode);
   const sensors = useSensors(
@@ -110,6 +123,7 @@ export function DayBlock({
       accommodationNights: undefined,
       accommodationName: "",
       accommodationLink: "",
+      accommodationAttachment: undefined,
       activityBlocks: [],
     });
   };
@@ -124,15 +138,68 @@ export function DayBlock({
   const endValue = findLoc(day.endPlace);
   const routeLabel = formatDayRouteLabel(day.place, day.endPlace);
 
+  const sectionPaperSx = {
+    p: 2,
+    bgcolor: "background.paper" as const,
+    borderRadius: cardRadius,
+    boxShadow: "none" as const,
+    border: `1px solid ${t.dayCardBorder}`,
+    width: "100%",
+  };
+
+  const sectionLabelSx = {
+    mb: 1.25,
+    fontWeight: 500,
+    color: "text.disabled",
+  };
+
+  if (readOnly) {
+    return (
+      <Stack
+        spacing={1.25}
+        sx={{
+          width: fill ? "100%" : SQUAD_DAY_CARD_WIDTH,
+          flexShrink: fill ? 1 : 0,
+        }}
+      >
+        <Paper elevation={0} sx={sectionPaperSx}>
+          <FieldLabel sx={sectionLabelSx}>Accommodation</FieldLabel>
+          <AccommodationCard borderless mode={mode} day={day} onChange={onChange} />
+        </Paper>
+
+        {!compact ? (
+          <Paper elevation={0} sx={sectionPaperSx}>
+            <FieldLabel sx={sectionLabelSx}>Activities</FieldLabel>
+            <Stack spacing={1}>
+              {day.activityBlocks.map((block) => (
+                <ActivityBlockCard
+                  key={block.id}
+                  block={block}
+                  mode={mode}
+                  borderless
+                  onChange={(next) => updateBlock(block.id, next)}
+                />
+              ))}
+            </Stack>
+          </Paper>
+        ) : null}
+      </Stack>
+    );
+  }
+
   return (
     <Paper
       elevation={0}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
       sx={{
-        width: SQUAD_DAY_CARD_WIDTH,
-        flexShrink: 0,
-        ...(compact ? null : { height: "100%" }),
+        width: fill ? "100%" : SQUAD_DAY_CARD_WIDTH,
+        flexShrink: fill ? 1 : 0,
+        ...(fill
+          ? { height: "auto", overflow: "visible" }
+          : compact
+            ? null
+            : { height: "100%", overflow: "hidden" }),
         p: 2,
         bgcolor: "background.paper",
         borderRadius: cardRadius,
@@ -142,9 +209,9 @@ export function DayBlock({
         flexDirection: "column",
         gap: 0,
         minHeight: 0,
-        overflow: "hidden",
       }}
     >
+      {!hideHeader ? (
       <Stack
         direction="row"
         sx={{ alignItems: "flex-start", gap: 0.75, pb: 1.25, flexShrink: 0 }}
@@ -200,6 +267,7 @@ export function DayBlock({
           </span>
         </Tooltip>
       </Stack>
+      ) : null}
 
       <Box
         sx={{
@@ -224,8 +292,7 @@ export function DayBlock({
       {!compact && (
         <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
+            ...(fill ? {} : { flex: 1, minHeight: 0 }),
             display: "flex",
             flexDirection: "column",
             py: 1.25,
@@ -235,9 +302,8 @@ export function DayBlock({
           <FieldLabel sx={{ mb: 0.25 }}>Activities</FieldLabel>
           <Box
             sx={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
+              ...(fill ? {} : { flex: 1, minHeight: 0 }),
+              overflowY: fill ? "visible" : "auto",
               overflowX: "clip",
               pt: `${BLOCK_CONTROL_BLEED}px`,
               mt: `-${BLOCK_CONTROL_BLEED}px`,

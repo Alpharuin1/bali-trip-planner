@@ -19,6 +19,14 @@ export interface ActivityBlock {
   id: string; // stable id for drag-and-drop reordering
   name: string;
   activities: Activity[];
+  attachment?: FileAttachment;
+}
+
+/** Small booking doc stored inline (base64) so it syncs with the shared trip payload. */
+export interface FileAttachment {
+  name: string;
+  mimeType: string;
+  dataUrl: string;
 }
 
 export interface Day {
@@ -29,6 +37,7 @@ export interface Day {
   accommodationNights?: number;
   accommodationName?: string;
   accommodationLink?: string;
+  accommodationAttachment?: FileAttachment;
   activityBlocks: ActivityBlock[];
 }
 

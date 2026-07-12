@@ -32,6 +32,7 @@ import { buildTheme, tokens } from "./theme";
 import { CloudTripBar } from "./components/CloudTripBar";
 import { MyPlanView } from "./components/MyPlanView";
 import { ProfileUnlockDialog } from "./components/ProfileUnlockDialog";
+import { MobileItineraryView } from "./components/MobileItineraryView";
 import { DayBlock } from "./components/DayBlock";
 import { TripMap } from "./components/TripMap";
 import { MapLegend } from "./components/MapLegend";
@@ -65,6 +66,7 @@ import { usePersistedState } from "./utils/storage";
 import { colorForTemplate } from "./utils/palette";
 import { useRouteLegs } from "./hooks/useRouteLegs";
 import { useCloudTrip } from "./hooks/useCloudTrip";
+import { useIsMobile } from "./hooks/useIsMobile";
 import type { TripSnapshot } from "./services/tripCloud";
 import {
   deleteProfilePasscode,
@@ -217,6 +219,7 @@ export default function App() {
 
   const t = tokens(themeMode);
   const theme = useMemo(() => buildTheme(themeMode), [themeMode]);
+  const isMobile = useIsMobile();
 
   const totalAccommodation = useMemo(
     () => computeTotalAccommodation(active?.days ?? []),
@@ -519,14 +522,16 @@ export default function App() {
       <CssBaseline />
       <Box
         sx={{
-          p: { xs: 1.5, md: 2.5 },
+          p: isMobile ? 0 : { xs: 1.5, md: 2.5 },
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: isMobile ? 0 : 2,
           bgcolor: "background.default",
+          overflow: "hidden",
         }}
       >
+        {!isMobile ? (
         <CloudTripBar
           configured={cloud.configured}
           shareCode={cloud.shareCode}
@@ -544,6 +549,7 @@ export default function App() {
           onCreateSharedTrip={cloud.createSharedTrip}
           onStopSharing={cloud.stopSharing}
         />
+        ) : null}
 
         <ProfileUnlockDialog
           open={unlockOpen}
@@ -553,7 +559,73 @@ export default function App() {
           onUnlock={handleUnlockProfile}
         />
 
-        {showPersonalPlan && activeProfile ? (
+        {isMobile ? (
+          !isSquadView && activeProfile?.hasPasscode && !isProfileUnlocked(activeProfile.id) ? (
+            <Paper
+              elevation={0}
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 0,
+                boxShadow: "none",
+                mx: 1.5,
+                my: 1.5,
+              }}
+            >
+              <Stack spacing={1.5} sx={{ alignItems: "center", maxWidth: 360, px: 2 }}>
+                <LockOutlinedIcon sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {activeProfile.name}&apos;s plan is locked
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center" }}>
+                  Enter the 4-digit passcode to view this personal plan.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setPendingViewId(activeProfile.id);
+                    setUnlockOpen(true);
+                  }}
+                >
+                  Enter passcode
+                </Button>
+              </Stack>
+            </Paper>
+          ) : mode === "plan" ? (
+            <MobileItineraryView
+              plan={active}
+              snapshot={cloudSnapshot}
+              themeMode={themeMode}
+              activeViewId={activeViewId}
+              profiles={profiles}
+              activeProfile={activeProfile}
+              showPersonalPlan={showPersonalPlan}
+              onActiveViewChange={handleActiveViewChange}
+              onUpdateDay={(id, d) => updateDayInPlan(activeTemplate, id, d)}
+              onUpdateProfile={updateProfile}
+              onImportSnapshot={applyCloudSnapshot}
+            />
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                flex: 1,
+                m: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "16px",
+                boxShadow: t.cardShadow,
+              }}
+            >
+              <Typography sx={{ color: "text.secondary", px: 2, textAlign: "center" }}>
+                Compare mode is available on desktop.
+              </Typography>
+            </Paper>
+          )
+        ) : showPersonalPlan && activeProfile ? (
           <MyPlanView
             profile={activeProfile}
             squadPlan={active}
