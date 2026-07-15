@@ -1,5 +1,5 @@
 import type { ClothingBlock, ClothingItem, Day, PersonalDay, PersonalProfile } from "../types";
-import { newId, normalizeDayActivityBlocks } from "./plan";
+import { ensureActivityBlockIds, newId } from "./plan";
 import { linkLabel, normalizeUrl } from "./links";
 
 export const SQUAD_SIZE = 7;
@@ -47,19 +47,20 @@ export function reconcilePersonalDayWithSquad(
   const syncedLinked: ClothingBlock[] = [];
 
   for (const activityBlock of squadDay.activityBlocks) {
-    const name = activityBlock.name.trim();
+    const squadName = activityBlock.name ?? "";
     const link = activityBlock.activities[0]?.text.trim() ?? "";
-    if (!name && !link) continue;
+    if (!squadName.trim() && !link) continue;
 
     const ref = squadActivityRef(activityBlock.id, 0);
-    const defaultName = name || linkLabel(normalizeUrl(link) ?? link);
+    const defaultName =
+      squadName.trim() ? squadName : linkLabel(normalizeUrl(link) ?? link);
     const existing = linkedByRef.get(ref);
 
     if (existing) {
       syncedLinked.push({
         ...existing,
         squadActivityRef: ref,
-        name: defaultName || existing.name,
+        name: existing.name.trim() ? existing.name : defaultName,
       });
     } else {
       syncedLinked.push({
@@ -112,7 +113,7 @@ export const ensureProfileIds = (profile: PersonalProfile): PersonalProfile => (
     ...d,
     id: d.id ?? newId("pday"),
     notes: d.notes ?? "",
-    travelBlocks: normalizeDayActivityBlocks(d.travelBlocks ?? []),
+    travelBlocks: ensureActivityBlockIds(d.travelBlocks ?? []),
     clothingBlocks: (d.clothingBlocks ?? []).map((b) => ({
       ...b,
       id: b.id ?? newId("cloth"),

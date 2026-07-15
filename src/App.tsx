@@ -44,6 +44,7 @@ import { findLoc } from "./locations";
 import type {
   CompareLayout,
   Day,
+  PersonalDay,
   PersonalProfile,
   Plan,
   Stop,
@@ -384,6 +385,19 @@ export default function App() {
   const updateProfile = (profile: PersonalProfile) =>
     setProfilesRaw((prev) => ({ ...prev, [profile.id]: profile }));
 
+  const updateProfileDay = (profileId: string, dayId: string, day: PersonalDay) =>
+    setProfilesRaw((prev) => {
+      const profile = prev[profileId];
+      if (!profile) return prev;
+      return {
+        ...prev,
+        [profileId]: {
+          ...profile,
+          days: profile.days.map((d) => (d.id === dayId ? day : d)),
+        },
+      };
+    });
+
   const addProfile = async (
     name: string,
     passcode?: string,
@@ -624,7 +638,7 @@ export default function App() {
               showPersonalPlan={showPersonalPlan}
               onActiveViewChange={handleActiveViewChange}
               onUpdateDay={(id, d) => updateDayInPlan(activeTemplate, id, d)}
-              onUpdateProfile={updateProfile}
+              onUpdateProfileDay={updateProfileDay}
               onImportSnapshot={applyCloudSnapshot}
             />
           ) : (

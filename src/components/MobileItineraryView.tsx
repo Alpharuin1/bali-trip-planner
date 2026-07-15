@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import type { Day, PersonalDay, PersonalProfile, Plan, ThemeMode } from "../types";
 import { addDays, parseISO } from "../utils/date";
@@ -20,7 +20,7 @@ interface MobileItineraryViewProps {
   showPersonalPlan: boolean;
   onActiveViewChange: (viewId: string) => void;
   onUpdateDay: (id: string, day: Day) => void;
-  onUpdateProfile: (profile: PersonalProfile) => void;
+  onUpdateProfileDay: (profileId: string, dayId: string, day: PersonalDay) => void;
   onImportSnapshot: (snapshot: TripSnapshot) => void;
 }
 
@@ -34,7 +34,7 @@ export function MobileItineraryView({
   showPersonalPlan,
   onActiveViewChange,
   onUpdateDay,
-  onUpdateProfile,
+  onUpdateProfileDay,
   onImportSnapshot,
 }: MobileItineraryViewProps) {
   const [dayIndex, setDayIndex] = useState(0);
@@ -48,16 +48,14 @@ export function MobileItineraryView({
 
   const squadDay = plan.days[safeIndex];
   const currentDate = addDays(dateBase, safeIndex);
-
-  const updatePersonalDay = (dayId: string, next: PersonalDay) => {
-    if (!activeProfile) return;
-    onUpdateProfile({
-      ...activeProfile,
-      days: activeProfile.days.map((d) => (d.id === dayId ? next : d)),
-    });
-  };
-
   const personalDay = activeProfile?.days[safeIndex];
+  const personalDayId = personalDay?.id;
+  const activeProfileId = activeProfile?.id;
+
+  const reconciledPersonalDay = useMemo(() => {
+    if (!personalDay) return undefined;
+    return reconcilePersonalDayWithSquad(personalDay, squadDay);
+  }, [personalDay, squadDay]);
 
   return (
     <Box
@@ -93,17 +91,17 @@ export function MobileItineraryView({
           py: 1.25,
         }}
       >
-        {showPersonalPlan && activeProfile && personalDay ? (
+        {showPersonalPlan && activeProfileId && reconciledPersonalDay && personalDayId ? (
           <PersonalDayBlock
             index={safeIndex}
             date={currentDate}
-            day={reconcilePersonalDayWithSquad(personalDay, squadDay)}
+            day={reconciledPersonalDay}
             squadDay={squadDay}
             mode={themeMode}
             fill
             hideHeader
             selected
-            onChange={(next) => updatePersonalDay(personalDay.id, next)}
+            onChange={(next) => onUpdateProfileDay(activeProfileId, personalDayId, next)}
           />
         ) : squadDay ? (
           <DayBlock

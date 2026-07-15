@@ -43,6 +43,7 @@ export function FieldLinkFields({
           "& .MuiOutlinedInput-input": {
             overflow: "hidden",
             textOverflow: "ellipsis",
+            fontSize: { xs: 16, sm: "inherit" },
           },
         }}
       />

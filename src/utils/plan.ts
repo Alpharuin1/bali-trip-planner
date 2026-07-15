@@ -13,6 +13,33 @@ export const blankBlock = (_n = 1): ActivityBlock => ({
   activities: [],
 });
 
+/** Backfill ids / shape only — does not rewrite names or links (safe while typing). */
+export function ensureActivityBlockIds(blocks: ActivityBlock[]): ActivityBlock[] {
+  return (blocks ?? []).map((b) => ({
+    ...b,
+    id: b.id ?? newId("blk"),
+    name: b.name ?? "",
+    activities: (b.activities ?? []).map((a) =>
+      typeof a === "string" ? { text: a } : { ...a, text: a.text ?? "" }
+    ),
+  }));
+}
+
+function isLegacyLinkBucket(blocks: ActivityBlock[]): boolean {
+  return (
+    blocks.length === 1 &&
+    blocks[0].name.trim().toLowerCase() === "links" &&
+    blocks[0].activities.filter((a) => a.text.trim()).length > 1
+  );
+}
+
+/** Heal ids on read; run full legacy migration only when the old shape is detected. */
+export function healActivityBlocks(blocks: ActivityBlock[]): ActivityBlock[] {
+  const withIds = ensureActivityBlockIds(blocks);
+  if (isLegacyLinkBucket(withIds)) return normalizeDayActivityBlocks(withIds);
+  return withIds;
+}
+
 /** One activity name + optional link per block; migrate legacy flattened link lists. */
 export function normalizeDayActivityBlocks(blocks: ActivityBlock[]): ActivityBlock[] {
   const source = (blocks ?? []).map((b) => ({
@@ -119,7 +146,7 @@ export const ensureIds = (plan: Plan): Plan => ({
     accommodationName: (d as any).accommodationName ?? "",
     accommodationLink: (d as any).accommodationLink ?? "",
     accommodationAttachment: (d as any).accommodationAttachment,
-    activityBlocks: normalizeDayActivityBlocks(d.activityBlocks ?? []),
+    activityBlocks: healActivityBlocks(d.activityBlocks ?? []),
   })),
 });
 

@@ -16,7 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import type { ThemeMode } from "../types";
 import { linkLabel, normalizeUrl } from "../utils/links";
-import { stopTypingKeyPropagation } from "../utils/keyboard";
+import { stopTypingKeyPropagation, stopTypingInputPropagation } from "../utils/keyboard";
 import { tokens } from "../theme";
 
 interface ActivityLinkControlProps {
@@ -57,6 +57,7 @@ function LinkInputRow({
           if (e.key === "Enter") onConfirm();
           if (e.key === "Escape") onCancel?.();
         }}
+        onInput={stopTypingInputPropagation}
         sx={textFieldSx}
       />
       <IconButton size="small" color="primary" onClick={onConfirm}>

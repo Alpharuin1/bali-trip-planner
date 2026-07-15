@@ -84,7 +84,7 @@ export function ClothingBlockCard({
                 fontWeight: 600,
                 width: `${Math.max(block.name.length, 6)}ch`,
                 maxWidth: "100%",
-                "& input": { p: 0, cursor: "text" },
+                "& input": { p: 0, cursor: "text", fontSize: { xs: 16, sm: 12 } },
               }}
             />
             <EditIcon
@@ -118,6 +118,9 @@ export function ClothingBlockCard({
               "& .MuiOutlinedInput-root": {
                 bgcolor: "background.paper",
                 borderRadius: rInner,
+              },
+              "& .MuiOutlinedInput-input": {
+                fontSize: { xs: 16, sm: "inherit" },
               },
             }}
           />
