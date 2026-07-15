@@ -44,6 +44,7 @@ import { findLoc } from "./locations";
 import type {
   CompareLayout,
   Day,
+  DocBlock,
   PersonalDay,
   PersonalProfile,
   Plan,
@@ -398,6 +399,19 @@ export default function App() {
       };
     });
 
+  const updateProfileDocBlocks = (profileId: string, docBlocks: DocBlock[]) =>
+    setProfilesRaw((prev) => {
+      const profile = prev[profileId];
+      if (!profile) return prev;
+      return {
+        ...prev,
+        [profileId]: {
+          ...profile,
+          docBlocks,
+        },
+      };
+    });
+
   const addProfile = async (
     name: string,
     passcode?: string,
@@ -639,6 +653,7 @@ export default function App() {
               onActiveViewChange={handleActiveViewChange}
               onUpdateDay={(id, d) => updateDayInPlan(activeTemplate, id, d)}
               onUpdateProfileDay={updateProfileDay}
+              onUpdateProfileDocBlocks={updateProfileDocBlocks}
               onImportSnapshot={applyCloudSnapshot}
             />
           ) : (
@@ -670,6 +685,7 @@ export default function App() {
             onSplitterDrag={handleSplitterDrag}
             onResetSplit={resetSplit}
             onUpdateProfile={updateProfile}
+            onUpdateProfileDocBlocks={updateProfileDocBlocks}
           />
         ) : !isSquadView && activeProfile?.hasPasscode ? (
           <Paper

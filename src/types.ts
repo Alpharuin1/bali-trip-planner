@@ -80,8 +80,17 @@ export interface PersonalProfile {
   id: string;
   name: string;
   days: PersonalDay[];
+  /** Profile-level document blocks (passports, insurance, tickets, etc.). */
+  docBlocks?: DocBlock[];
   /** Synced metadata — passcode hash lives in Supabase, not in the trip payload. */
   hasPasscode?: boolean;
+}
+
+/** A labeled group of file attachments on a personal profile's Docs page. */
+export interface DocBlock {
+  id: string;
+  label: string;
+  attachments: FileAttachment[];
 }
 
 /** Compare-mode sub-layout. */

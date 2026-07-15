@@ -140,6 +140,11 @@ export function countEmbeddedBookings(snapshot: TripSnapshot): number {
     }
   }
   for (const profile of Object.values(snapshot.profiles ?? {})) {
+    for (const block of profile.docBlocks ?? []) {
+      for (const attachment of block.attachments ?? []) {
+        if (attachment.dataUrl) count += 1;
+      }
+    }
     for (const day of profile.days ?? []) {
       for (const block of day.travelBlocks ?? []) {
         if (block.attachment?.dataUrl) count += 1;

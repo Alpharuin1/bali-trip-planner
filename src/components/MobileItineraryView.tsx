@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
-import type { Day, PersonalDay, PersonalProfile, Plan, ThemeMode } from "../types";
+import type { Day, DocBlock, PersonalDay, PersonalProfile, Plan, ThemeMode } from "../types";
+import { PERSONAL_DOCS_PAGE_INDEX } from "../layout";
 import { addDays, parseISO } from "../utils/date";
 import { reconcilePersonalDayWithSquad } from "../utils/personalPlan";
 import { DayBlock } from "./DayBlock";
 import { PersonalDayBlock } from "./PersonalDayBlock";
+import { PersonalDocsBlock } from "./PersonalDocsBlock";
 import { DELETE_CONTROL_BLEED } from "./BlockCardShell";
 import { MobileTripHeader } from "./MobileTripHeader";
 import { MobileDayNav } from "./MobileDayNav";
@@ -21,6 +23,7 @@ interface MobileItineraryViewProps {
   onActiveViewChange: (viewId: string) => void;
   onUpdateDay: (id: string, day: Day) => void;
   onUpdateProfileDay: (profileId: string, dayId: string, day: PersonalDay) => void;
+  onUpdateProfileDocBlocks: (profileId: string, docBlocks: DocBlock[]) => void;
   onImportSnapshot: (snapshot: TripSnapshot) => void;
 }
 
@@ -35,22 +38,33 @@ export function MobileItineraryView({
   onActiveViewChange,
   onUpdateDay,
   onUpdateProfileDay,
+  onUpdateProfileDocBlocks,
   onImportSnapshot,
 }: MobileItineraryViewProps) {
-  const [dayIndex, setDayIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(
+    showPersonalPlan ? PERSONAL_DOCS_PAGE_INDEX : 0
+  );
   const dateBase = parseISO(plan.startDate);
   const dayCount = plan.days.length;
-  const safeIndex = Math.min(Math.max(dayIndex, 0), Math.max(dayCount - 1, 0));
+  const minIndex = showPersonalPlan ? PERSONAL_DOCS_PAGE_INDEX : 0;
+  const safeIndex = Math.min(Math.max(pageIndex, minIndex), Math.max(dayCount - 1, 0));
 
   useEffect(() => {
-    if (dayIndex !== safeIndex) setDayIndex(safeIndex);
-  }, [dayIndex, safeIndex]);
+    if (pageIndex !== safeIndex) setPageIndex(safeIndex);
+  }, [pageIndex, safeIndex]);
 
-  const squadDay = plan.days[safeIndex];
-  const currentDate = addDays(dateBase, safeIndex);
-  const personalDay = activeProfile?.days[safeIndex];
+  useEffect(() => {
+    setPageIndex(showPersonalPlan ? PERSONAL_DOCS_PAGE_INDEX : 0);
+  }, [showPersonalPlan, activeProfile?.id]);
+
+  const onDocs = showPersonalPlan && pageIndex === PERSONAL_DOCS_PAGE_INDEX;
+  const dayIndex = onDocs ? 0 : pageIndex;
+  const squadDay = plan.days[dayIndex];
+  const currentDate = addDays(dateBase, dayIndex);
+  const personalDay = activeProfile?.days[dayIndex];
   const personalDayId = personalDay?.id;
   const activeProfileId = activeProfile?.id;
+  const docBlocks = activeProfile?.docBlocks ?? [];
 
   const reconciledPersonalDay = useMemo(() => {
     if (!personalDay) return undefined;
@@ -70,7 +84,8 @@ export function MobileItineraryView({
     >
       <MobileTripHeader
         plan={plan}
-        dayIndex={safeIndex}
+        pageIndex={pageIndex}
+        showDocs={showPersonalPlan}
         activeViewId={activeViewId}
         profiles={profiles}
         themeMode={themeMode}
@@ -91,9 +106,17 @@ export function MobileItineraryView({
           py: 1.25,
         }}
       >
-        {showPersonalPlan && activeProfileId && reconciledPersonalDay && personalDayId ? (
+        {showPersonalPlan && activeProfileId && onDocs ? (
+          <PersonalDocsBlock
+            docBlocks={docBlocks}
+            mode={themeMode}
+            fill
+            selected
+            onChange={(next) => onUpdateProfileDocBlocks(activeProfileId, next)}
+          />
+        ) : showPersonalPlan && activeProfileId && reconciledPersonalDay && personalDayId ? (
           <PersonalDayBlock
-            index={safeIndex}
+            index={dayIndex}
             date={currentDate}
             day={reconciledPersonalDay}
             squadDay={squadDay}
@@ -105,7 +128,7 @@ export function MobileItineraryView({
           />
         ) : squadDay ? (
           <DayBlock
-            index={safeIndex}
+            index={dayIndex}
             date={currentDate}
             day={squadDay}
             mode={themeMode}
@@ -119,11 +142,14 @@ export function MobileItineraryView({
 
       <MobileDayNav
         plan={plan}
-        dayIndex={safeIndex}
+        pageIndex={pageIndex}
         themeMode={themeMode}
-        onDayIndexChange={setDayIndex}
-        onPrevious={() => setDayIndex((i) => Math.max(0, i - 1))}
-        onNext={() => setDayIndex((i) => Math.min(dayCount - 1, i + 1))}
+        showDocs={showPersonalPlan}
+        onPageIndexChange={setPageIndex}
+        onPrevious={() =>
+          setPageIndex((i) => Math.max(showPersonalPlan ? PERSONAL_DOCS_PAGE_INDEX : 0, i - 1))
+        }
+        onNext={() => setPageIndex((i) => Math.min(dayCount - 1, i + 1))}
       />
     </Box>
   );

@@ -1,11 +1,14 @@
 import { useMemo, useState, type Ref } from "react";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
-import type { PersonalDay, PersonalProfile, Plan, ThemeMode, TileStyle } from "../types";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import type { DocBlock, PersonalDay, PersonalProfile, Plan, ThemeMode, TileStyle } from "../types";
 import { addDays, parseISO } from "../utils/date";
 import { buildPackingList } from "../utils/packingList";
+import { PERSONAL_DOCS_PAGE_INDEX } from "../layout";
 import { tokens } from "../theme";
 import { PersonalDayBlock } from "./PersonalDayBlock";
+import { PersonalDocsBlock } from "./PersonalDocsBlock";
 import { DayLocationPanel } from "./DayLocationPanel";
 import { PackingListDialog } from "./PackingListDialog";
 import { Splitter } from "./Splitter";
@@ -24,6 +27,7 @@ interface MyPlanViewProps {
   onSplitterDrag: (deltaX: number) => void;
   onResetSplit: () => void;
   onUpdateProfile: (profile: PersonalProfile) => void;
+  onUpdateProfileDocBlocks: (profileId: string, docBlocks: DocBlock[]) => void;
 }
 
 export function MyPlanView({
@@ -36,10 +40,11 @@ export function MyPlanView({
   onSplitterDrag,
   onResetSplit,
   onUpdateProfile,
+  onUpdateProfileDocBlocks,
 }: MyPlanViewProps) {
   const t = tokens(themeMode);
   const dateBase = parseISO(squadPlan.startDate);
-  const [focusedDayIndex, setFocusedDayIndex] = useState(0);
+  const [focusedPageIndex, setFocusedPageIndex] = useState(PERSONAL_DOCS_PAGE_INDEX);
   const [packingOpen, setPackingOpen] = useState(false);
 
   const packingDocument = useMemo(
@@ -53,6 +58,9 @@ export function MyPlanView({
       days: profile.days.map((d) => (d.id === dayId ? next : d)),
     });
 
+  const docBlocks = profile.docBlocks ?? [];
+  const onDocs = focusedPageIndex === PERSONAL_DOCS_PAGE_INDEX;
+  const focusedDayIndex = onDocs ? 0 : focusedPageIndex;
   const focusedSquadDay = squadPlan.days[focusedDayIndex];
   const focusedDate = addDays(dateBase, focusedDayIndex);
 
@@ -101,7 +109,7 @@ export function MyPlanView({
             <Box>
               <Typography variant="h6">{profile.name}&apos;s plan</Typography>
               <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.25 }}>
-                Outfits & packing — synced with squad trip dates
+                Docs, outfits & packing — synced with squad trip dates
               </Typography>
             </Box>
             <Button
@@ -136,6 +144,13 @@ export function MyPlanView({
                 scrollbarGutter: "stable",
               }}
             >
+              <PersonalDocsBlock
+                docBlocks={docBlocks}
+                mode={themeMode}
+                selected={onDocs}
+                onFocus={() => setFocusedPageIndex(PERSONAL_DOCS_PAGE_INDEX)}
+                onChange={(next) => onUpdateProfileDocBlocks(profile.id, next)}
+              />
               {profile.days.map((day, i) => (
                 <PersonalDayBlock
                   key={day.id}
@@ -144,8 +159,8 @@ export function MyPlanView({
                   day={day}
                   squadDay={squadPlan.days[i]}
                   mode={themeMode}
-                  selected={focusedDayIndex === i}
-                  onFocus={() => setFocusedDayIndex(i)}
+                  selected={focusedPageIndex === i}
+                  onFocus={() => setFocusedPageIndex(i)}
                   onChange={(next) => updateDay(day.id, next)}
                 />
               ))}
@@ -165,7 +180,30 @@ export function MyPlanView({
           flexDirection: "column",
         }}
       >
-        {focusedSquadDay && (
+        {onDocs ? (
+          <Paper
+            elevation={0}
+            sx={{
+              flex: 1,
+              p: 2,
+              borderRadius: RADIUS_SECTION,
+              boxShadow: t.cardShadow,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <DescriptionOutlinedIcon sx={{ fontSize: 40, color: "text.secondary", opacity: 0.5 }} />
+            <Typography variant="h6">Trip documents</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 280 }}>
+              Store passports, insurance, tickets, and other files in labeled blocks on the Docs
+              card.
+            </Typography>
+          </Paper>
+        ) : focusedSquadDay ? (
           <DayLocationPanel
             dayIndex={focusedDayIndex}
             date={focusedDate}
@@ -175,7 +213,7 @@ export function MyPlanView({
             themeMode={themeMode}
             cardRadius={RADIUS_SECTION}
           />
-        )}
+        ) : null}
       </Box>
 
       <PackingListDialog

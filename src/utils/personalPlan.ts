@@ -1,4 +1,4 @@
-import type { ClothingBlock, ClothingItem, Day, PersonalDay, PersonalProfile } from "../types";
+import type { ClothingBlock, ClothingItem, Day, DocBlock, PersonalDay, PersonalProfile } from "../types";
 import { ensureActivityBlockIds, newId } from "./plan";
 import { linkLabel, normalizeUrl } from "./links";
 
@@ -28,6 +28,12 @@ export const blankPersonalDay = (): PersonalDay => ({
   clothingBlocks: [],
   travelBlocks: [],
   notes: "",
+});
+
+export const blankDocBlock = (n = 1): DocBlock => ({
+  id: newId("doc"),
+  label: `Document ${n}`,
+  attachments: [],
 });
 
 /** Mirror squad activities as personal packing blocks (one block per activity row). */
@@ -109,6 +115,16 @@ export const reconcilePersonalDays = (
 
 export const ensureProfileIds = (profile: PersonalProfile): PersonalProfile => ({
   ...profile,
+  docBlocks: (profile.docBlocks ?? []).map((b) => ({
+    ...b,
+    id: b.id ?? newId("doc"),
+    label: b.label ?? "",
+    attachments: (b.attachments ?? []).map((a) => ({
+      name: a.name ?? "",
+      mimeType: a.mimeType ?? "",
+      dataUrl: a.dataUrl ?? "",
+    })),
+  })),
   days: profile.days.map((d) => ({
     ...d,
     id: d.id ?? newId("pday"),
@@ -134,6 +150,7 @@ export const createProfile = (
     id: newId("member"),
     name: name.trim(),
     days: Array.from({ length: dayCount }, blankPersonalDay),
+    docBlocks: [],
     ...(options?.hasPasscode ? { hasPasscode: true } : {}),
   });
 

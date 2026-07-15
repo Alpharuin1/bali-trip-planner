@@ -24,6 +24,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import { SQUAD_VIEW_ID, type PersonalProfile, type Plan, type ThemeMode } from "../types";
+import { PERSONAL_DOCS_PAGE_INDEX } from "../layout";
 import { addDays, fmtDate, fmtDay, parseISO } from "../utils/date";
 import { formatDayRouteLabel } from "../utils/plan";
 import type { TripSnapshot } from "../services/tripCloud";
@@ -40,7 +41,8 @@ const MOBILE_HEADER_RADIUS = "8px";
 
 interface MobileTripHeaderProps {
   plan: Plan;
-  dayIndex: number;
+  pageIndex: number;
+  showDocs?: boolean;
   activeViewId: string;
   profiles: Record<string, PersonalProfile>;
   themeMode: ThemeMode;
@@ -51,7 +53,8 @@ interface MobileTripHeaderProps {
 
 export function MobileTripHeader({
   plan,
-  dayIndex,
+  pageIndex,
+  showDocs = false,
   activeViewId,
   profiles,
   themeMode,
@@ -84,15 +87,19 @@ export function MobileTripHeader({
       ? "Squad"
       : (profiles[activeViewId]?.name ?? "Profile");
 
+  const onDocs = showDocs && pageIndex === PERSONAL_DOCS_PAGE_INDEX;
+  const dayIndex = onDocs ? 0 : Math.max(0, pageIndex);
   const squadDay = plan.days[dayIndex];
   const routeLabel = squadDay
     ? formatDayRouteLabel(squadDay.place, squadDay.endPlace)
     : null;
   const currentDate = addDays(parseISO(plan.startDate), dayIndex);
   const isSquadView = activeViewId === SQUAD_VIEW_ID;
-  const dayOverline = isSquadView
-    ? `Day ${dayIndex + 1} – ${fmtDate(currentDate)}`
-    : `${fmtDate(currentDate)}, ${fmtDay(currentDate)}`;
+  const dayOverline = onDocs
+    ? "Docs"
+    : isSquadView
+      ? `Day ${dayIndex + 1} – ${fmtDate(currentDate)}`
+      : `${fmtDate(currentDate)}, ${fmtDay(currentDate)}`;
 
   const handleDownload = () => {
     try {
@@ -283,7 +290,7 @@ export function MobileTripHeader({
             >
               {dayOverline}
             </Typography>
-            {routeLabel ? (
+            {routeLabel && !onDocs ? (
               <Typography
                 sx={{
                   fontSize: 18,
