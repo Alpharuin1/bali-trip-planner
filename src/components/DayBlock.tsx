@@ -38,6 +38,7 @@ import { dayHasAccommodationContent } from "../utils/accommodation";
 import { blockListScrollBleedSx } from "./BlockCardShell";
 import { SQUAD_DAY_CARD_WIDTH } from "../layout";
 import { tokens } from "../theme";
+import { typingFieldKeyDownProps } from "../utils/keyboard";
 import { useActivityBlockDeleteUndo } from "../hooks/useActivityBlockDeleteUndo";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { DragHandleProps } from "./SortableItem";
@@ -313,7 +314,9 @@ export function DayBlock({
           value={placeValue}
           onChange={(_, v) => updatePlace(v)}
           isOptionEqualToValue={(o, v) => o.name === v.name}
-          renderInput={(params) => <TextField {...params} placeholder="Select" />}
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Select" {...typingFieldKeyDownProps} />
+          )}
         />
       </Box>
 
@@ -406,7 +409,9 @@ export function DayBlock({
             value={endValue}
             onChange={(_, v) => updateEnd(v)}
             isOptionEqualToValue={(o, v) => o.name === v.name}
-            renderInput={(params) => <TextField {...params} placeholder="Select" />}
+            renderInput={(params) => (
+              <TextField {...params} placeholder="Select" {...typingFieldKeyDownProps} />
+            )}
           />
         </Box>
       </Stack>

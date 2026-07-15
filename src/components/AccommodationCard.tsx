@@ -3,6 +3,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import type { Day, ThemeMode } from "../types";
 import { tokens } from "../theme";
+import { typingFieldKeyDownProps } from "../utils/keyboard";
 import { ActivityLinkControl } from "./ActivityLinkControl";
 import { AttachmentControl } from "./AttachmentControl";
 import { FieldLabel } from "./FieldLabel";
@@ -98,6 +99,7 @@ export function AccommodationCard({ mode, day, onChange, borderless = false }: A
                   accommodationNights: parseOptionalInt(e.target.value),
                 })
               }
+              {...typingFieldKeyDownProps}
               slotProps={{
                 htmlInput: { min: 0, step: 1, inputMode: "numeric" },
                 input: {
@@ -145,6 +147,7 @@ export function AccommodationCard({ mode, day, onChange, borderless = false }: A
                   accommodationPrice: parseOptionalPrice(e.target.value),
                 })
               }
+              {...typingFieldKeyDownProps}
               slotProps={{ htmlInput: { min: 0, step: 1 } }}
               sx={fieldSx}
             />

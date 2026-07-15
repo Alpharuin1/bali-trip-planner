@@ -1,6 +1,7 @@
 import { Box, Stack, TextField } from "@mui/material";
 import type { FileAttachment, ThemeMode } from "../types";
 import { tokens } from "../theme";
+import { typingFieldKeyDownProps } from "../utils/keyboard";
 import { ActivityLinkControl } from "./ActivityLinkControl";
 import { AttachmentControl } from "./AttachmentControl";
 
@@ -33,6 +34,7 @@ export function FieldLinkFields({
         placeholder={namePlaceholder}
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
+        {...typingFieldKeyDownProps}
         sx={{
           "& .MuiOutlinedInput-root": {
             bgcolor: "background.paper",

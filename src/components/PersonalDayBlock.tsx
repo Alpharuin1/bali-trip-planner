@@ -35,6 +35,7 @@ import { blankBlock, formatDayRouteLabel } from "../utils/plan";
 import { blankClothingBlock, reconcilePersonalDayWithSquad } from "../utils/personalPlan";
 import { PERSONAL_DAY_CARD_WIDTH } from "../layout";
 import { tokens } from "../theme";
+import { isTypingTarget } from "../utils/keyboard";
 
 interface PersonalDayBlockProps {
   index: number;
@@ -188,10 +189,10 @@ export function PersonalDayBlock({
         fill
           ? undefined
           : (e) => {
-              if (onFocus && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault();
-                onFocus();
-              }
+              if (!onFocus || e.key !== "Enter") return;
+              if (isTypingTarget(e.target)) return;
+              e.preventDefault();
+              onFocus();
             }
       }
       sx={{

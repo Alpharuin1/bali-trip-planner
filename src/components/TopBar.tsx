@@ -35,6 +35,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { parseISO } from "../utils/date";
 import type { ThemeMode, ViewMode } from "../types";
+import { stopTypingKeyPropagation } from "../utils/keyboard";
 import { tokens } from "../theme";
 import { colorForTemplate } from "../utils/palette";
 
@@ -151,6 +152,7 @@ export function TopBar({
             onStartDateChange(v);
             if (parseISO(v) > parseISO(endDate)) onEndDateChange(v);
           }}
+          onKeyDown={stopTypingKeyPropagation}
           sx={{ width: 150 }}
         />
         <Typography sx={{ color: "text.secondary" }}>—</Typography>
@@ -163,6 +165,7 @@ export function TopBar({
             if (parseISO(v) < parseISO(startDate)) return;
             onEndDateChange(v);
           }}
+          onKeyDown={stopTypingKeyPropagation}
           sx={{ width: 150 }}
         />
       </Stack>
@@ -368,6 +371,7 @@ export function TopBar({
             value={renameVal}
             onChange={(e) => setRenameVal(e.target.value)}
             onKeyDown={(e) => {
+              stopTypingKeyPropagation(e);
               if (e.key === "Enter") submitRename();
             }}
             sx={{ mt: 1, minWidth: 300 }}

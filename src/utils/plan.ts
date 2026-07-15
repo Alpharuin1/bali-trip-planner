@@ -49,10 +49,11 @@ export function normalizeDayActivityBlocks(blocks: ActivityBlock[]): ActivityBlo
       .filter((a): a is { raw: string; url: string } => Boolean(a.url));
     const nonUrls = acts.filter((a) => !normalizeUrl(a.text));
 
-    let name = block.name.trim();
-    if (name.toLowerCase() === "links") name = "";
-    if (!name && nonUrls.length) name = nonUrls[0].text;
-    if (!name && urls.length === 1) name = linkLabel(urls[0].url);
+    // Preserve spaces while typing — only trim for legacy checks / empty fallbacks.
+    let name = block.name ?? "";
+    if (name.trim().toLowerCase() === "links") name = "";
+    if (!name.trim() && nonUrls.length) name = nonUrls[0].text;
+    if (!name.trim() && urls.length === 1) name = linkLabel(urls[0].url);
 
     const link = urls[0]?.url ?? "";
     return {

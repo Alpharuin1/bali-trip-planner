@@ -53,6 +53,7 @@ import type {
 } from "./types";
 import { SQUAD_VIEW_ID } from "./types";
 import { addDays, parseISO } from "./utils/date";
+import { typingFieldKeyDownProps } from "./utils/keyboard";
 import { computeTotalAccommodation } from "./utils/accommodation";
 import { blankPlan, ensureIds, planLength, reconcileDays } from "./utils/plan";
 import {
@@ -360,8 +361,16 @@ export default function App() {
   };
 
   const updateDayInPlan = (planName: string, id: string, day: Day) =>
-    updatePlan(planName, {
-      days: plans[planName].days.map((d) => (d.id === id ? day : d)),
+    setPlans((prev) => {
+      const plan = prev[planName];
+      if (!plan) return prev;
+      return {
+        ...prev,
+        [planName]: {
+          ...plan,
+          days: plan.days.map((d) => (d.id === id ? day : d)),
+        },
+      };
     });
 
   const reorderDaysInPlan = (planName: string, fromId: string, toId: string) => {
@@ -855,6 +864,7 @@ const PlanView = ({
                   onStartDateChange(v);
                   if (parseISO(v) > parseISO(endDate)) onEndDateChange(v);
                 }}
+                {...typingFieldKeyDownProps}
                 sx={{ width: 142 }}
               />
               <Typography sx={{ color: "text.secondary", fontSize: 13 }}>→</Typography>
@@ -867,6 +877,7 @@ const PlanView = ({
                   if (parseISO(v) < parseISO(startDate)) return;
                   onEndDateChange(v);
                 }}
+                {...typingFieldKeyDownProps}
                 sx={{ width: 142 }}
               />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>

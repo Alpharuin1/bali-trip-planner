@@ -10,6 +10,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import type { ClothingBlock, ClothingItem, ThemeMode } from "../types";
 import { tokens } from "../theme";
 import { blankClothingItem } from "../utils/personalPlan";
+import { typingFieldKeyDownProps } from "../utils/keyboard";
 import type { DragHandleProps } from "./SortableItem";
 import { BlockCardShell } from "./BlockCardShell";
 
@@ -77,6 +78,7 @@ export function ClothingBlockCard({
             <InputBase
               value={block.name}
               onChange={(e) => onChange({ ...block, name: e.target.value })}
+              {...typingFieldKeyDownProps}
               sx={{
                 fontSize: 12,
                 fontWeight: 600,
@@ -108,6 +110,7 @@ export function ClothingBlockCard({
             placeholder="Clothing item"
             value={item.text}
             onChange={(e) => updateItem(i, { text: e.target.value })}
+            {...typingFieldKeyDownProps}
             onBlur={(e) => {
               if (!e.target.value && block.items.length > 1) removeItem(i);
             }}

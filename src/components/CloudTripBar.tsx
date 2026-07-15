@@ -37,6 +37,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import type { CloudSyncStatus } from "../hooks/useCloudTrip";
 import { shareLinkFor } from "../services/tripCloud";
 import { SQUAD_VIEW_ID, type PersonalProfile, type ThemeMode } from "../types";
+import { stopTypingKeyPropagation } from "../utils/keyboard";
 import { tokens } from "../theme";
 import { PinInput } from "./PinInput";
 import { isValidProfilePin } from "../utils/profilePasscode";
@@ -557,6 +558,7 @@ export function CloudTripBar({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
+                stopTypingKeyPropagation(e);
                 if (e.key === "Enter" && canSubmitAdd) void submitAdd();
               }}
             />
@@ -624,6 +626,7 @@ export function CloudTripBar({
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             onKeyDown={(e) => {
+              stopTypingKeyPropagation(e);
               if (e.key === "Enter") submitEdit();
             }}
             sx={{ mt: 1 }}
@@ -676,6 +679,7 @@ export function CloudTripBar({
             placeholder={DELETE_CONFIRM_WORD}
             value={deleteConfirm}
             onChange={(e) => setDeleteConfirm(e.target.value)}
+            onKeyDown={stopTypingKeyPropagation}
             error={deleteConfirm.length > 0 && !deleteConfirmed}
             helperText={
               deleteConfirm.length > 0 && !deleteConfirmed
